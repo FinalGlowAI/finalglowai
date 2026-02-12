@@ -41,7 +41,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          onClick={() => navigate("/stylist")}
+          onClick={() => navigate("/outfit")}
           className="w-full gradient-gold rounded-2xl p-5 flex items-center justify-between shadow-lg"
         >
           <div className="flex items-center gap-3">
@@ -51,7 +51,7 @@ const HomePage = () => {
                 Start Styling
               </p>
               <p className="font-body text-xs text-foreground/70">
-                Upload outfit → Get matched looks
+                Pick outfit colors → Get matched looks
               </p>
             </div>
           </div>
