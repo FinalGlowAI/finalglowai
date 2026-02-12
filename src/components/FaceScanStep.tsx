@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Camera, Loader2, AlertCircle, Sparkles, Download } from "lucide-react";
-import { FaceLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { renderMakeup } from "@/lib/makeupRenderer";
 
 interface MakeupConfig {
   lipColor: string;
@@ -14,25 +15,6 @@ interface MakeupConfig {
 interface FaceScanStepProps {
   makeupConfig: MakeupConfig;
   onScanComplete: () => void;
-}
-
-// MediaPipe Face Mesh landmark indices for makeup regions
-const LIPS_OUTER = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185];
-const LIPS_INNER = [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191];
-const LEFT_EYE_UPPER = [159, 145, 144, 163, 7, 33, 246, 161, 160, 159];
-const RIGHT_EYE_UPPER = [386, 374, 373, 390, 249, 263, 466, 388, 387, 386];
-const LEFT_CHEEK = [50, 101, 36, 205, 187, 123, 116, 111, 117, 118, 119, 100];
-const RIGHT_CHEEK = [280, 330, 266, 425, 411, 352, 345, 340, 346, 347, 348, 329];
-
-function parseHSL(hsl: string): [number, number, number] {
-  const match = hsl.match(/hsl\((\d+),?\s*(\d+)%,?\s*(\d+)%\)/);
-  if (match) return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
-  return [0, 50, 50];
-}
-
-function hslToRgba(hsl: string, alpha: number): string {
-  const [h, s, l] = parseHSL(hsl);
-  return `hsla(${h}, ${s}%, ${l}%, ${alpha})`;
 }
 
 const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
@@ -130,67 +112,7 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
 
   const drawMakeup = useCallback(
     (ctx: CanvasRenderingContext2D, landmarks: { x: number; y: number; z: number }[], w: number, h: number) => {
-      // Draw lips
-      const lipAlpha = makeupConfig.style === "bold" ? 0.55 : makeupConfig.style === "natural" ? 0.25 : 0.4;
-      ctx.fillStyle = hslToRgba(makeupConfig.lipColor, lipAlpha);
-      ctx.beginPath();
-      LIPS_OUTER.forEach((idx, i) => {
-        const pt = landmarks[idx];
-        if (i === 0) ctx.moveTo(pt.x * w, pt.y * h);
-        else ctx.lineTo(pt.x * w, pt.y * h);
-      });
-      ctx.closePath();
-      ctx.fill();
-
-      // Inner lips highlight
-      ctx.fillStyle = hslToRgba(makeupConfig.lipColor, lipAlpha * 0.6);
-      ctx.beginPath();
-      LIPS_INNER.forEach((idx, i) => {
-        const pt = landmarks[idx];
-        if (i === 0) ctx.moveTo(pt.x * w, pt.y * h);
-        else ctx.lineTo(pt.x * w, pt.y * h);
-      });
-      ctx.closePath();
-      ctx.fill();
-
-      // Eye shadow
-      const eyeAlpha = makeupConfig.style === "party" ? 0.4 : makeupConfig.style === "clean_girl" ? 0.15 : 0.25;
-      ctx.fillStyle = hslToRgba(makeupConfig.eyeshadowColor, eyeAlpha);
-
-      [LEFT_EYE_UPPER, RIGHT_EYE_UPPER].forEach((eyeIndices) => {
-        ctx.beginPath();
-        eyeIndices.forEach((idx, i) => {
-          const pt = landmarks[idx];
-          const yOffset = -8; // Slightly above the eye
-          if (i === 0) ctx.moveTo(pt.x * w, pt.y * h + yOffset);
-          else ctx.lineTo(pt.x * w, pt.y * h + yOffset);
-        });
-        ctx.closePath();
-        ctx.fill();
-      });
-
-      // Blush
-      const blushAlpha = makeupConfig.style === "soft_glam" ? 0.2 : 0.14;
-      ctx.fillStyle = hslToRgba(makeupConfig.blushColor, blushAlpha);
-
-      [LEFT_CHEEK, RIGHT_CHEEK].forEach((cheekIndices) => {
-        // Calculate center of cheek region
-        let cx = 0, cy = 0;
-        cheekIndices.forEach((idx) => {
-          cx += landmarks[idx].x * w;
-          cy += landmarks[idx].y * h;
-        });
-        cx /= cheekIndices.length;
-        cy /= cheekIndices.length;
-
-        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 35);
-        gradient.addColorStop(0, hslToRgba(makeupConfig.blushColor, blushAlpha));
-        gradient.addColorStop(1, hslToRgba(makeupConfig.blushColor, 0));
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 35, 0, Math.PI * 2);
-        ctx.fill();
-      });
+      renderMakeup(ctx, landmarks, w, h, makeupConfig);
     },
     [makeupConfig]
   );
