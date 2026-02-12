@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shirt, Sparkles, Gem, Footprints, Check, Camera,
@@ -6,15 +6,19 @@ import {
   Flower2, Moon, Sun, CircleDot, Briefcase,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import FaceScanStep from "@/components/FaceScanStep";
+import MakeupResultStep from "@/components/MakeupResultStep";
 
 // ─── STEP TYPES ───
-type FlowStep = "outfit" | "style" | "skin" | "brand";
+type FlowStep = "outfit" | "style" | "skin" | "brand" | "scan" | "result";
 
 const stepLabels: { key: FlowStep; label: string }[] = [
   { key: "outfit", label: "Outfit" },
   { key: "style", label: "Style" },
   { key: "skin", label: "Skin" },
   { key: "brand", label: "Brand" },
+  { key: "scan", label: "Face Scan" },
+  { key: "result", label: "Results" },
 ];
 
 // ─── TRANSITION VARIANTS ───
@@ -224,14 +228,75 @@ const StylingFlowPage = () => {
         return selectedSkin !== null || autoDetect;
       case "brand":
         return selectedBrand !== null;
+      case "scan":
+      case "result":
+        return false; // These steps have their own CTAs
       default:
         return false;
     }
   };
 
   const handleFinish = () => {
-    navigate("/stylist");
+    setDirection(1);
+    setCurrentStep("scan");
   };
+
+  const handleScanComplete = () => {
+    setDirection(1);
+    setCurrentStep("result");
+  };
+
+  const handleStartOver = () => {
+    setDirection(-1);
+    setCurrentStep("outfit");
+    setOutfitSelections({});
+    setSelectedVibe(null);
+    setSelectedSkin(null);
+    setAutoDetect(false);
+    setSelectedBrand(null);
+  };
+
+  // Generate makeup config based on selections
+  const makeupConfig = useMemo(() => {
+    const outfitColors = Object.values(outfitSelections).filter(Boolean) as string[];
+    const primaryOutfit = outfitColors[0] || "hsl(0,0%,8%)";
+
+    // Pick complementary makeup colors based on outfit + style
+    const styleMap: Record<string, { lip: string; eye: string; blush: string }> = {
+      luxury: { lip: "hsl(350, 60%, 40%)", eye: "hsl(38, 50%, 65%)", blush: "hsl(12, 50%, 65%)" },
+      classy: { lip: "hsl(5, 45%, 55%)", eye: "hsl(25, 30%, 60%)", blush: "hsl(15, 45%, 70%)" },
+      elegant: { lip: "hsl(345, 50%, 45%)", eye: "hsl(280, 20%, 55%)", blush: "hsl(350, 35%, 72%)" },
+      soft_glam: { lip: "hsl(10, 45%, 62%)", eye: "hsl(38, 45%, 70%)", blush: "hsl(18, 55%, 72%)" },
+      natural: { lip: "hsl(15, 30%, 65%)", eye: "hsl(30, 25%, 68%)", blush: "hsl(20, 35%, 72%)" },
+      party: { lip: "hsl(340, 70%, 45%)", eye: "hsl(270, 40%, 50%)", blush: "hsl(345, 55%, 65%)" },
+      clean_girl: { lip: "hsl(15, 25%, 68%)", eye: "hsl(30, 15%, 72%)", blush: "hsl(18, 30%, 75%)" },
+      bold: { lip: "hsl(0, 75%, 42%)", eye: "hsl(220, 50%, 40%)", blush: "hsl(345, 50%, 60%)" },
+    };
+
+    const colors = styleMap[selectedVibe || "elegant"];
+    const skinColor = selectedSkin !== null ? skinTones[selectedSkin].color : "hsl(25, 38%, 65%)";
+
+    return {
+      lipColor: colors.lip,
+      eyeshadowColor: colors.eye,
+      blushColor: colors.blush,
+      skinTone: skinColor,
+      style: selectedVibe || "elegant",
+    };
+  }, [outfitSelections, selectedVibe, selectedSkin]);
+
+  // Generate product recommendations
+  const makeupResults = useMemo(() => {
+    const brandName = brands.find((b) => b.id === selectedBrand)?.name || "";
+    const prefix = brandName && brandName !== "No Preference" ? `${brandName} ` : "";
+
+    return [
+      { area: "Lips", product: `${prefix}Satin Lip Color`, shade: makeupConfig.lipColor, tip: "Apply from center outward for a plush, dimensional finish" },
+      { area: "Eyes", product: `${prefix}Luminous Eye Shadow`, shade: makeupConfig.eyeshadowColor, tip: "Blend across the lid and softly into the crease" },
+      { area: "Cheeks", product: `${prefix}Silk Blush`, shade: makeupConfig.blushColor, tip: "Smile and sweep onto the apples, blending upward" },
+      { area: "Base", product: `${prefix}Radiant Foundation`, shade: makeupConfig.skinTone, tip: "Apply with a damp beauty sponge for a dewy, skin-like finish" },
+    ];
+  }, [makeupConfig, selectedBrand]);
 
   const selectColor = (categoryId: string, colorValue: string) => {
     setOutfitSelections((prev) => ({
@@ -724,33 +789,77 @@ const StylingFlowPage = () => {
             </div>
           </motion.div>
         )}
+        {/* ═══ FACE SCAN STEP ═══ */}
+        {currentStep === "scan" && (
+          <motion.div
+            key="scan"
+            custom={direction}
+            variants={pageVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={pageTransition}
+            className="px-5"
+          >
+            <p className="font-body text-sm text-muted-foreground mb-5">
+              Position your face in the frame for live makeup preview
+            </p>
+            <FaceScanStep
+              makeupConfig={makeupConfig}
+              onScanComplete={handleScanComplete}
+            />
+          </motion.div>
+        )}
+
+        {/* ═══ RESULT STEP ═══ */}
+        {currentStep === "result" && (
+          <motion.div
+            key="result"
+            custom={direction}
+            variants={pageVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={pageTransition}
+            className="px-5"
+          >
+            <MakeupResultStep
+              results={makeupResults}
+              style={selectedVibe || ""}
+              brand={selectedBrand || ""}
+              onStartOver={handleStartOver}
+            />
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* ─── BOTTOM CTA ─── */}
-      <div className="fixed bottom-20 left-0 right-0 px-5 z-40 max-w-lg mx-auto">
-        <motion.button
-          onClick={currentStep === "brand" ? handleFinish : goNext}
-          disabled={!canProceed()}
-          className={`w-full py-4 rounded-2xl font-display text-base font-medium tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
-            canProceed()
-              ? "gradient-gold text-foreground shadow-lg shadow-gold/20"
-              : "bg-muted text-muted-foreground"
-          }`}
-          whileTap={canProceed() ? { scale: 0.98 } : {}}
-        >
-          {currentStep === "brand" ? (
-            <>
-              <Sparkles size={18} />
-              Get My Look
-            </>
-          ) : (
-            <>
-              Continue
-              <ArrowRight size={16} />
-            </>
-          )}
-        </motion.button>
-      </div>
+      {currentStep !== "scan" && currentStep !== "result" && (
+        <div className="fixed bottom-20 left-0 right-0 px-5 z-40 max-w-lg mx-auto">
+          <motion.button
+            onClick={currentStep === "brand" ? handleFinish : goNext}
+            disabled={!canProceed()}
+            className={`w-full py-4 rounded-2xl font-display text-base font-medium tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
+              canProceed()
+                ? "gradient-gold text-foreground shadow-lg shadow-gold/20"
+                : "bg-muted text-muted-foreground"
+            }`}
+            whileTap={canProceed() ? { scale: 0.98 } : {}}
+          >
+            {currentStep === "brand" ? (
+              <>
+                <Camera size={18} />
+                Start Face Scan
+              </>
+            ) : (
+              <>
+                Continue
+                <ArrowRight size={16} />
+              </>
+            )}
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 };
