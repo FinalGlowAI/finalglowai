@@ -256,32 +256,127 @@ const StylingFlowPage = () => {
     setSelectedBrand(null);
   };
 
-  // Generate makeup config based on selections
+  // Generate makeup config dynamically from outfit + style + skin + brand
   const makeupConfig = useMemo(() => {
     const outfitColors = Object.values(outfitSelections).filter(Boolean) as string[];
-    const primaryOutfit = outfitColors[0] || "hsl(0,0%,8%)";
+    const skinColor = selectedSkin !== null ? skinTones[selectedSkin].color : "hsl(25, 38%, 65%)";
+    const style = selectedVibe || "elegant";
 
-    // Pick complementary makeup colors based on outfit + style
-    const styleMap: Record<string, { lip: string; eye: string; blush: string }> = {
-      luxury: { lip: "hsl(350, 60%, 40%)", eye: "hsl(38, 50%, 65%)", blush: "hsl(12, 50%, 65%)" },
-      classy: { lip: "hsl(5, 45%, 55%)", eye: "hsl(25, 30%, 60%)", blush: "hsl(15, 45%, 70%)" },
-      elegant: { lip: "hsl(345, 50%, 45%)", eye: "hsl(280, 20%, 55%)", blush: "hsl(350, 35%, 72%)" },
-      soft_glam: { lip: "hsl(10, 45%, 62%)", eye: "hsl(38, 45%, 70%)", blush: "hsl(18, 55%, 72%)" },
-      natural: { lip: "hsl(15, 30%, 65%)", eye: "hsl(30, 25%, 68%)", blush: "hsl(20, 35%, 72%)" },
-      party: { lip: "hsl(340, 70%, 45%)", eye: "hsl(270, 40%, 50%)", blush: "hsl(345, 55%, 65%)" },
-      clean_girl: { lip: "hsl(15, 25%, 68%)", eye: "hsl(30, 15%, 72%)", blush: "hsl(18, 30%, 75%)" },
-      bold: { lip: "hsl(0, 75%, 42%)", eye: "hsl(220, 50%, 40%)", blush: "hsl(345, 50%, 60%)" },
+    // Parse outfit colors to extract dominant hue info
+    const parseHSL = (hsl: string): [number, number, number] => {
+      const m = hsl.match(/hsl\((\d+),?\s*(\d+)%,?\s*(\d+)%\)/);
+      return m ? [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])] : [0, 0, 50];
     };
 
-    const colors = styleMap[selectedVibe || "elegant"];
-    const skinColor = selectedSkin !== null ? skinTones[selectedSkin].color : "hsl(25, 38%, 65%)";
+    // Find the most chromatic outfit color (highest saturation, skip neutrals)
+    let dominantHue = -1;
+    let dominantSat = 0;
+    let dominantLight = 50;
+    outfitColors.forEach((c) => {
+      const [h, s, l] = parseHSL(c);
+      if (s > dominantSat && s > 10) {
+        dominantHue = h;
+        dominantSat = s;
+        dominantLight = l;
+      }
+    });
+
+    const hasColorfulOutfit = dominantHue >= 0 && dominantSat > 15;
+    const isWarmOutfit = hasColorfulOutfit && (dominantHue <= 50 || dominantHue >= 330);
+    const isCoolOutfit = hasColorfulOutfit && dominantHue > 180 && dominantHue < 330;
+    const isRedFamily = hasColorfulOutfit && (dominantHue <= 15 || dominantHue >= 340);
+    const isPinkFamily = hasColorfulOutfit && dominantHue >= 320 && dominantHue <= 360;
+    const isBlueFamily = hasColorfulOutfit && dominantHue >= 200 && dominantHue <= 260;
+    const isGreenFamily = hasColorfulOutfit && dominantHue >= 80 && dominantHue <= 170;
+
+    // Skin undertone detection from skin tone
+    const [, , skinL] = parseHSL(skinColor);
+    const isLightSkin = skinL > 65;
+    const isDarkSkin = skinL < 35;
+
+    // Base makeup palettes per style
+    const basePalettes: Record<string, { lip: [number, number, number]; eye: [number, number, number]; blush: [number, number, number] }> = {
+      luxury:     { lip: [350, 60, 40], eye: [38, 50, 65], blush: [12, 50, 65] },
+      classy:     { lip: [5, 45, 55],   eye: [25, 30, 60], blush: [15, 45, 70] },
+      elegant:    { lip: [345, 50, 45], eye: [280, 20, 55], blush: [350, 35, 72] },
+      soft_glam:  { lip: [10, 45, 62],  eye: [38, 45, 70], blush: [18, 55, 72] },
+      natural:    { lip: [15, 30, 65],  eye: [30, 20, 72], blush: [20, 30, 75] },
+      party:      { lip: [340, 70, 45], eye: [270, 45, 50], blush: [345, 55, 65] },
+      clean_girl: { lip: [15, 25, 68],  eye: [30, 15, 72], blush: [18, 30, 75] },
+      bold:       { lip: [0, 75, 42],   eye: [220, 50, 40], blush: [345, 50, 60] },
+    };
+
+    let { lip, eye, blush } = basePalettes[style] || basePalettes.elegant;
+
+    // ── Adapt to outfit colors ──
+    if (hasColorfulOutfit) {
+      if (isRedFamily) {
+        // Red outfit → complementary elegant red lip, warm gold eyes
+        lip = [dominantHue, Math.min(lip[1] + 10, 80), lip[2]];
+        eye = [38, 45, 68]; // Warm gold to complement red
+        blush = [12, 45, 70]; // Warm peach blush
+      } else if (isPinkFamily) {
+        // Pink outfit → matching soft pink lip, rose-toned eyes
+        lip = [350, 45, 58];
+        eye = [330, 25, 68]; // Rose shimmer
+        blush = [345, 40, 72]; // Soft rose blush
+      } else if (isBlueFamily) {
+        // Blue outfit → nude/berry lip contrasts well, cool-toned eyes
+        lip = style === "bold" ? [340, 65, 42] : [8, 40, 60]; // Berry or warm nude
+        eye = [Math.max(dominantHue - 20, 200), 30, 58]; // Cool-toned eyeshadow
+        blush = [350, 35, 72]; // Cool pink blush
+      } else if (isGreenFamily) {
+        // Green outfit → warm earthy tones, berry or nude lip
+        lip = style === "bold" ? [345, 60, 42] : [12, 40, 58];
+        eye = [35, 40, 62]; // Bronze/warm brown
+        blush = [15, 45, 70]; // Warm peach
+      } else if (isWarmOutfit) {
+        // Other warm tones → complementary warm makeup
+        lip = [Math.max(dominantHue - 15, 0), 50, 52];
+        eye = [35, 40, 65]; // Gold/bronze
+        blush = [15, 50, 68];
+      } else if (isCoolOutfit) {
+        // Other cool tones → cool-toned makeup
+        lip = [350, 50, 50]; // Mauve/berry
+        eye = [280, 25, 60]; // Soft purple
+        blush = [340, 35, 72]; // Cool pink
+      }
+    }
+
+    // ── Adjust intensity per style ──
+    if (style === "natural" || style === "clean_girl") {
+      // Pull everything toward skin tone, desaturate
+      lip[1] = Math.max(lip[1] - 20, 15);
+      lip[2] = Math.min(lip[2] + 10, 72);
+      eye[1] = Math.max(eye[1] - 15, 10);
+      eye[2] = Math.min(eye[2] + 8, 75);
+      blush[1] = Math.max(blush[1] - 15, 10);
+    } else if (style === "bold" || style === "party") {
+      // Intensify
+      lip[1] = Math.min(lip[1] + 15, 85);
+      lip[2] = Math.max(lip[2] - 5, 35);
+      eye[1] = Math.min(eye[1] + 10, 70);
+    }
+
+    // ── Skin tone adjustments ──
+    if (isLightSkin) {
+      // Slightly softer shades for very light skin
+      lip[2] = Math.min(lip[2] + 5, 65);
+      blush[2] = Math.min(blush[2] + 5, 78);
+    } else if (isDarkSkin) {
+      // Richer, deeper shades for dark skin
+      lip[2] = Math.max(lip[2] - 8, 30);
+      lip[1] = Math.min(lip[1] + 10, 80);
+      eye[2] = Math.max(eye[2] - 5, 35);
+      blush[1] = Math.min(blush[1] + 10, 65);
+    }
 
     return {
-      lipColor: colors.lip,
-      eyeshadowColor: colors.eye,
-      blushColor: colors.blush,
+      lipColor: `hsl(${lip[0]}, ${lip[1]}%, ${lip[2]}%)`,
+      eyeshadowColor: `hsl(${eye[0]}, ${eye[1]}%, ${eye[2]}%)`,
+      blushColor: `hsl(${blush[0]}, ${blush[1]}%, ${blush[2]}%)`,
       skinTone: skinColor,
-      style: selectedVibe || "elegant",
+      style,
     };
   }, [outfitSelections, selectedVibe, selectedSkin]);
 
