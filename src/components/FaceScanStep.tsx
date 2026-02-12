@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Camera, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { Camera, Loader2, AlertCircle, Sparkles, Download } from "lucide-react";
 import { FaceLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 
 interface MakeupConfig {
@@ -46,6 +46,23 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [faceDetected, setFaceDetected] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [captured, setCaptured] = useState(false);
+
+  const capturePhoto = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setCaptured(true);
+    setTimeout(() => setCaptured(false), 800);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `makeup-look-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  }, []);
 
   // Initialize MediaPipe
   useEffect(() => {
@@ -316,6 +333,31 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
                   />
                 </div>
               </div>
+            )}
+
+            {/* Capture button */}
+            {faceDetected && scanProgress >= 1 && (
+              <div className="absolute bottom-4 right-4 z-20">
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={capturePhoto}
+                  className="w-12 h-12 rounded-full gradient-gold flex items-center justify-center shadow-lg border-2 border-card"
+                >
+                  <Download size={18} className="text-foreground" />
+                </motion.button>
+              </div>
+            )}
+
+            {/* Flash effect */}
+            {captured && (
+              <motion.div
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0 bg-background z-30 pointer-events-none"
+              />
             )}
           </>
         )}
