@@ -7,8 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import BottomNav from "./components/BottomNav";
 import OnboardingPage from "./pages/OnboardingPage";
 import HomePage from "./pages/HomePage";
+import StylingFlowPage from "./pages/StylingFlowPage";
 import StylistPage from "./pages/StylistPage";
-import OutfitColorPage from "./pages/OutfitColorPage";
 import ColorAnalysisPage from "./pages/ColorAnalysisPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
@@ -26,8 +26,8 @@ const AppContent = () => {
       <div className="max-w-lg mx-auto relative">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/outfit" element={<StylingFlowPage />} />
           <Route path="/stylist" element={<StylistPage />} />
-          <Route path="/outfit" element={<OutfitColorPage />} />
           <Route path="/colors" element={<ColorAnalysisPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />

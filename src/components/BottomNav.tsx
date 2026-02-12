@@ -4,7 +4,7 @@ import { Home, Sparkles, Palette, User } from "lucide-react";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
-  { path: "/stylist", icon: Sparkles, label: "Stylist" },
+  { path: "/outfit", icon: Sparkles, label: "Stylist" },
   { path: "/colors", icon: Palette, label: "Colors" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
