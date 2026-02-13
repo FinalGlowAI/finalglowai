@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Sparkles, ChevronRight, RotateCcw, Share2, ExternalLink, ShieldCheck, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, ChevronRight, RotateCcw, Share2, ExternalLink, ShieldCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MakeupResult {
   area: string;
@@ -67,13 +68,32 @@ const shopLinks = [
   { label: "Buy on Fenty", url: "https://fentybeauty.com" },
 ];
 
+const beautyMessages = [
+  "Analyzing your features…",
+  "Perfecting your skin tone…",
+  "Enhancing your natural glow…",
+  "Applying virtual beauty look…",
+  "Refining highlights & contour…",
+  "Finalizing your glow…",
+];
+
 const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing }: MakeupResultStepProps) => {
   const [showOriginal, setShowOriginal] = useState(false);
+  const [msgIndex, setMsgIndex] = useState(0);
   const recommendedProducts = brandProducts[brand] || defaultProducts;
   const brandDisplayName = brand && brand !== "none"
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
     : null;
   const displayImage = showOriginal ? capturedImage : (enhancedImage || capturedImage);
+
+  useEffect(() => {
+    if (!isEnhancing) return;
+    setMsgIndex(0);
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % beautyMessages.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isEnhancing]);
 
   return (
     <div className="space-y-5">
@@ -84,7 +104,7 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
           animate={{ opacity: 1, y: 0 }}
           className="relative rounded-2xl overflow-hidden border border-gold/20"
         >
-          {displayImage && (
+          {displayImage && !isEnhancing && (
             <img
               src={displayImage}
               alt="Your beauty look"
@@ -92,11 +112,39 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
             />
           )}
 
-          {/* Enhancement loading overlay */}
+          {/* Enhancement skeleton overlay */}
           {isEnhancing && (
-            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-              <Loader2 size={28} className="text-gold animate-spin" />
-              <p className="font-display text-sm font-medium text-foreground">Enhancing your look…</p>
+            <div className="w-full aspect-[3/4] bg-card flex flex-col items-center justify-center gap-5 p-6">
+              {/* Face skeleton */}
+              <div className="relative w-40 h-52 flex flex-col items-center gap-3">
+                <Skeleton className="w-32 h-32 rounded-full" />
+                <Skeleton className="w-24 h-3 rounded-full" />
+                <Skeleton className="w-16 h-3 rounded-full" />
+              </div>
+
+              {/* Shimmer progress bar */}
+              <div className="w-3/4 h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full gradient-gold"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 18, ease: "linear" }}
+                />
+              </div>
+
+              {/* Rotating beauty message */}
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={msgIndex}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.3 }}
+                  className="font-display text-sm font-medium text-foreground text-center"
+                >
+                  {beautyMessages[msgIndex]}
+                </motion.p>
+              </AnimatePresence>
               <p className="font-body text-xs text-muted-foreground">AI beauty transformation in progress</p>
             </div>
           )}
