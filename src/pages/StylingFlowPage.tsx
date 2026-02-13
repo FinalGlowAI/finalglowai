@@ -6,6 +6,8 @@ import {
   Flower2, Moon, Sun, CircleDot, Briefcase,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import FaceScanStep from "@/components/FaceScanStep";
 import MakeupResultStep from "@/components/MakeupResultStep";
 
@@ -197,6 +199,9 @@ const StylingFlowPage = () => {
   const [selectedSkin, setSelectedSkin] = useState<number | null>(null);
   const [autoDetect, setAutoDetect] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const currentStepIndex = stepLabels.findIndex((s) => s.key === currentStep);
 
@@ -241,10 +246,7 @@ const StylingFlowPage = () => {
     setCurrentStep("scan");
   };
 
-  const handleScanComplete = () => {
-    setDirection(1);
-    setCurrentStep("result");
-  };
+  
 
   const handleStartOver = () => {
     setDirection(-1);
@@ -254,6 +256,8 @@ const StylingFlowPage = () => {
     setSelectedSkin(null);
     setAutoDetect(false);
     setSelectedBrand(null);
+    setCapturedImage(null);
+    setEnhancedImage(null);
   };
 
   // Generate makeup config dynamically from outfit + style + skin + brand
@@ -392,6 +396,33 @@ const StylingFlowPage = () => {
       { area: "Base", product: `${prefix}Radiant Foundation`, shade: makeupConfig.skinTone, tip: "Apply with a damp beauty sponge for a dewy, skin-like finish" },
     ];
   }, [makeupConfig, selectedBrand]);
+
+  const handleScanComplete = useCallback(async (capturedImageBase64: string) => {
+    setCapturedImage(capturedImageBase64);
+    setDirection(1);
+    setCurrentStep("result");
+    setIsEnhancing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("enhance-beauty", {
+        body: {
+          imageBase64: capturedImageBase64,
+          makeupConfig,
+          style: selectedVibe || "elegant",
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setEnhancedImage(data.enhancedImage);
+    } catch (err: any) {
+      console.error("Enhancement error:", err);
+      toast.error(err.message || "Failed to enhance image. Your original capture is shown.");
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [makeupConfig, selectedVibe]);
 
   const selectColor = (categoryId: string, colorValue: string) => {
     setOutfitSelections((prev) => ({
@@ -923,6 +954,9 @@ const StylingFlowPage = () => {
               style={selectedVibe || ""}
               brand={selectedBrand || ""}
               onStartOver={handleStartOver}
+              capturedImage={capturedImage}
+              enhancedImage={enhancedImage}
+              isEnhancing={isEnhancing}
             />
           </motion.div>
         )}

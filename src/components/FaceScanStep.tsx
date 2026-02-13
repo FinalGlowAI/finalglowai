@@ -14,7 +14,7 @@ interface MakeupConfig {
 
 interface FaceScanStepProps {
   makeupConfig: MakeupConfig;
-  onScanComplete: () => void;
+  onScanComplete: (capturedImageBase64: string) => void;
 }
 
 const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
@@ -290,7 +290,13 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          onClick={onScanComplete}
+          onClick={() => {
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const base64 = canvas.toDataURL("image/png");
+              onScanComplete(base64);
+            }
+          }}
           className="w-full py-4 rounded-2xl gradient-gold text-foreground font-display text-base font-medium tracking-wide shadow-lg flex items-center justify-center gap-2"
           whileTap={{ scale: 0.98 }}
         >

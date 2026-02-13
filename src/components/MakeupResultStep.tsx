@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, ChevronRight, RotateCcw, Share2, ExternalLink, ShieldCheck } from "lucide-react";
+import { Sparkles, ChevronRight, RotateCcw, Share2, ExternalLink, ShieldCheck, Loader2 } from "lucide-react";
 
 interface MakeupResult {
   area: string;
@@ -13,6 +14,9 @@ interface MakeupResultStepProps {
   style: string;
   brand: string;
   onStartOver: () => void;
+  capturedImage?: string | null;
+  enhancedImage?: string | null;
+  isEnhancing?: boolean;
 }
 
 // ─── Brand-specific product recommendations ─────────────────────────
@@ -63,14 +67,53 @@ const shopLinks = [
   { label: "Buy on Fenty", url: "https://fentybeauty.com" },
 ];
 
-const MakeupResultStep = ({ results, style, brand, onStartOver }: MakeupResultStepProps) => {
+const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing }: MakeupResultStepProps) => {
+  const [showOriginal, setShowOriginal] = useState(false);
   const recommendedProducts = brandProducts[brand] || defaultProducts;
   const brandDisplayName = brand && brand !== "none"
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
     : null;
+  const displayImage = showOriginal ? capturedImage : (enhancedImage || capturedImage);
 
   return (
     <div className="space-y-5">
+      {/* ─── AI Enhanced Portrait ─── */}
+      {(capturedImage || isEnhancing) && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative rounded-2xl overflow-hidden border border-gold/20"
+        >
+          {displayImage && (
+            <img
+              src={displayImage}
+              alt="Your beauty look"
+              className="w-full aspect-[3/4] object-cover"
+            />
+          )}
+
+          {/* Enhancement loading overlay */}
+          {isEnhancing && (
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+              <Loader2 size={28} className="text-gold animate-spin" />
+              <p className="font-display text-sm font-medium text-foreground">Enhancing your look…</p>
+              <p className="font-body text-xs text-muted-foreground">AI beauty transformation in progress</p>
+            </div>
+          )}
+
+          {/* Before/After toggle */}
+          {enhancedImage && !isEnhancing && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+              <button
+                onClick={() => setShowOriginal(!showOriginal)}
+                className="px-4 py-1.5 rounded-full bg-card/80 backdrop-blur-md border border-border font-body text-xs text-foreground"
+              >
+                {showOriginal ? "Show Enhanced" : "Show Original"}
+              </button>
+            </div>
+          )}
+        </motion.div>
+      )}
       {/* Result Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
