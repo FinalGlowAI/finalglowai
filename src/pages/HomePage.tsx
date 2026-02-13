@@ -43,8 +43,8 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <h1 className="font-display text-5xl font-semibold tracking-tight text-primary-foreground leading-[1.1] mb-3">
-              <span className="text-gold">Deep Dark & Light Glow</span>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-primary-foreground leading-[1.1] mb-3">
+              <span className="text-gold">Deep Dark<br/>& Light Glow</span>
             </h1>
             <p className="font-display text-xl text-primary-foreground/90 italic mb-1">
               AI Beauty Stylist
