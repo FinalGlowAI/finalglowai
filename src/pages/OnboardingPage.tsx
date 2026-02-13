@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shield, ArrowRight, Eye } from "lucide-react";
 import heroImage from "@/assets/hero-beauty.jpg";
+import heroBrown from "@/assets/hero-beauty-brown.jpg";
+import heroDark from "@/assets/hero-beauty-dark.jpg";
+
+const heroImages = [heroImage, heroBrown, heroDark];
 
 const slides = [
   {
@@ -33,7 +37,14 @@ interface OnboardingPageProps {
 
 const OnboardingPage = ({ onComplete }: OnboardingPageProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentBgImage, setCurrentBgImage] = useState(0);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBgImage((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
   const next = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
@@ -47,12 +58,18 @@ const OnboardingPage = ({ onComplete }: OnboardingPageProps) => {
 
   return (
     <div className="fixed inset-0 z-[100] bg-foreground overflow-hidden">
-      {/* Background image with overlay */}
-      <img
-        src={heroImage}
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-30"
-      />
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={currentBgImage}
+          src={heroImages[currentBgImage]}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+        />
+      </AnimatePresence>
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/60 via-foreground/40 to-foreground/95" />
 
       {/* Content */}
