@@ -67,6 +67,13 @@ interface GuideStep {
   text: string;
 }
 
+// Map alternate area names to guide keys
+const areaToGuideKey: Record<string, string> = {
+  Cheeks: "Blush",
+  Base: "Foundation",
+  Skin: "Foundation",
+};
+
 const applicationGuides: Record<string, GuideStep[]> = {
   Foundation: [
     { icon: "💧", text: "Start with a pea-sized amount on the back of your hand" },
@@ -260,7 +267,7 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
       {results.map((item, i) => {
         const areaKey = item.area;
         const isAreaExpanded = expandedArea === areaKey;
-        const areaGuide = applicationGuides[areaKey];
+        const areaGuide = applicationGuides[areaKey] || applicationGuides[areaToGuideKey[areaKey]];
         return (
           <motion.div
             key={item.area}
