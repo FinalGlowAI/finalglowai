@@ -10,7 +10,7 @@ const heroImages = [heroImage, heroBrown, heroDark];
 const slides = [
   {
     title: "Welcome to",
-    highlight: "LUXE",
+    highlight: "Deep Dark & Light Glow",
     subtitle: "Your AI Beauty Stylist",
     description: "Effortlessly match your makeup to any outfit, occasion, and skin tone.",
     icon: Sparkles,
