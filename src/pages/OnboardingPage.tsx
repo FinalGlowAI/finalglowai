@@ -62,15 +62,15 @@ const OnboardingPage = ({ onComplete }: OnboardingPageProps) => {
         <motion.img
           key={currentBgImage}
           src={heroImages[currentBgImage]}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
+          alt="Beauty portrait"
+          className="absolute inset-0 w-full h-full object-cover"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
+          animate={{ opacity: 0.55 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.2, ease: "easeInOut" }}
         />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-b from-foreground/60 via-foreground/40 to-foreground/95" />
+      <div className="absolute inset-0 bg-gradient-to-b from-foreground/30 via-foreground/20 to-foreground/90" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col h-full safe-top safe-bottom">
