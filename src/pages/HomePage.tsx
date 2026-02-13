@@ -1,21 +1,41 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronRight, Shield } from "lucide-react";
 import heroImage from "@/assets/hero-beauty.jpg";
+import heroBrown from "@/assets/hero-beauty-brown.jpg";
+import heroDark from "@/assets/hero-beauty-dark.jpg";
 import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 
+const heroImages = [heroImage, heroBrown, heroDark];
+
 const HomePage = () => {
   const navigate = useNavigate();
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen pb-20">
       {/* Hero Section */}
       <div className="relative h-[70vh] overflow-hidden">
-        <img
-          src={heroImage}
-          alt="Luxury beauty editorial"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentImage}
+            src={heroImages[currentImage]}
+            alt="Luxury beauty editorial"
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+          />
+        </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-b from-foreground/20 via-transparent to-background" />
         <div className="absolute inset-0 flex flex-col justify-end p-6 pb-10">
           <motion.div
