@@ -26,7 +26,7 @@ const ProfilePage = () => {
               Privacy First
             </p>
             <p className="font-body text-xs text-foreground/80 mt-1 leading-relaxed">
-              Deep Dark & Light Glow never stores your photos or personal data. All analysis happens locally on your device.
+              Deep D'Ark & Light Glow never stores your photos or personal data. All analysis happens locally on your device.
             </p>
           </div>
         </div>
@@ -70,7 +70,7 @@ const ProfilePage = () => {
 
       {/* Footer */}
       <div className="mt-10 text-center">
-        <p className="font-display text-lg text-gold tracking-wider">Deep Dark & Light Glow</p>
+        <p className="font-display text-lg text-gold tracking-wider">Deep D'Ark & Light Glow</p>
         <p className="font-body text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
           Beauty, Redefined
         </p>
