@@ -62,23 +62,60 @@ const defaultProducts: BrandProduct[] = [
 ];
 
 // ─── How-to-apply guides per category ───────────────────────────────
-const applicationGuides: Record<string, string> = {
-  Foundation:
-    "Start with a pea-sized amount on the back of your hand. Using a damp beauty sponge or foundation brush, dot product on your forehead, cheeks, nose, and chin. Blend outward from the center of your face in light, even strokes. Build coverage gradually — less is more for a natural finish.",
-  Lipstick:
-    "Exfoliate lips gently beforehand. Line your lips with a matching liner for definition. Apply lipstick from the center of your upper lip outward, then glide across the lower lip. Blot with a tissue and reapply for longer-lasting color.",
-  Highlighter:
-    "Smile to find the highest points of your cheekbones. Using a fan brush or fingertip, sweep highlighter along the cheekbone tops, the bridge of your nose, your cupid's bow, and the inner corners of your eyes. Blend edges so the glow looks lit-from-within.",
-  Eyes:
-    "Apply a primer on lids first. Use a flat brush to pat a base shade across the lid, then deepen the crease with a darker tone using a fluffy blending brush. Add shimmer to the center of the lid with your fingertip, and line the lash line with short, feathered strokes.",
-  Lips:
-    "Hydrate lips with balm, then blot. Outline your natural lip shape with a lip liner — slightly overdraw for fullness. Fill in with your chosen color using a lip brush or directly from the bullet, starting at the center and blending outward.",
-  Blush:
-    "Smile and apply blush to the apples of your cheeks using a fluffy brush. Sweep upward toward your temples in a soft, circular motion. Tap off excess product first — it's easier to build than to remove. Cream blush can be applied with fingertips for a dewy finish.",
-  Contour:
-    "Using a matte bronzer or contour stick, draw along the hollows of your cheeks (suck in to find them), jawline, and hairline. Blend thoroughly with a dense brush or sponge using upward strokes. The key is subtlety — harsh lines break the illusion.",
-  Brows:
-    "Brush brows upward with a spoolie. Fill sparse areas with light, hair-like strokes using a pencil or pomade. Follow your natural arch — avoid over-drawing. Set with a clear or tinted brow gel for all-day hold.",
+interface GuideStep {
+  icon: string;
+  text: string;
+}
+
+const applicationGuides: Record<string, GuideStep[]> = {
+  Foundation: [
+    { icon: "💧", text: "Start with a pea-sized amount on the back of your hand" },
+    { icon: "🖌️", text: "Using a damp beauty sponge or brush, dot product on forehead, cheeks, nose & chin" },
+    { icon: "✋", text: "Blend outward from the center of your face in light, even strokes" },
+    { icon: "✨", text: "Build coverage gradually — less is more for a natural finish" },
+  ],
+  Lipstick: [
+    { icon: "🫧", text: "Exfoliate lips gently beforehand for a smooth canvas" },
+    { icon: "✏️", text: "Line your lips with a matching liner for definition" },
+    { icon: "💄", text: "Apply from the center of your upper lip outward, then glide across the lower lip" },
+    { icon: "💋", text: "Blot with a tissue and reapply for longer-lasting color" },
+  ],
+  Highlighter: [
+    { icon: "😊", text: "Smile to find the highest points of your cheekbones" },
+    { icon: "🖌️", text: "Using a fan brush or fingertip, sweep along cheekbone tops" },
+    { icon: "👃", text: "Add to the bridge of your nose, cupid's bow & inner eye corners" },
+    { icon: "✨", text: "Blend edges so the glow looks lit-from-within" },
+  ],
+  Eyes: [
+    { icon: "🧴", text: "Apply a primer on lids first for lasting wear" },
+    { icon: "🎨", text: "Pat a base shade across the lid, then deepen the crease with a darker tone" },
+    { icon: "✨", text: "Add shimmer to the center of the lid with your fingertip" },
+    { icon: "✏️", text: "Line the lash line with short, feathered strokes" },
+  ],
+  Lips: [
+    { icon: "💧", text: "Hydrate lips with balm, then blot" },
+    { icon: "✏️", text: "Outline your natural lip shape with liner — slightly overdraw for fullness" },
+    { icon: "💄", text: "Fill in with your chosen color, starting at the center" },
+    { icon: "💋", text: "Blend outward for a seamless, polished finish" },
+  ],
+  Blush: [
+    { icon: "😊", text: "Smile and locate the apples of your cheeks" },
+    { icon: "🖌️", text: "Apply blush using a fluffy brush in soft, circular motions" },
+    { icon: "⬆️", text: "Sweep upward toward your temples for a lifted look" },
+    { icon: "👆", text: "For cream blush, use fingertips for a dewy finish" },
+  ],
+  Contour: [
+    { icon: "🔍", text: "Suck in cheeks to find the hollows — that's your guide" },
+    { icon: "✏️", text: "Draw along hollows, jawline & hairline with bronzer or contour stick" },
+    { icon: "🖌️", text: "Blend thoroughly with a dense brush using upward strokes" },
+    { icon: "👌", text: "Keep it subtle — harsh lines break the illusion" },
+  ],
+  Brows: [
+    { icon: "🪥", text: "Brush brows upward with a spoolie" },
+    { icon: "✏️", text: "Fill sparse areas with light, hair-like strokes" },
+    { icon: "📐", text: "Follow your natural arch — avoid over-drawing" },
+    { icon: "💫", text: "Set with a clear or tinted brow gel for all-day hold" },
+  ],
 };
 
 // ─── Shop links ─────────────────────────────────────────────────────
@@ -271,13 +308,23 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
                   className="overflow-hidden"
                 >
                   <div className="px-4 pb-4 pt-0 border-t border-border">
-                    <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium mt-3 mb-2">
-                      How to apply
-                    </p>
-                    <p className="font-body text-xs text-muted-foreground leading-relaxed">
-                      {areaGuide}
-                    </p>
-                  </div>
+                     <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium mt-3 mb-3">
+                       How to apply
+                     </p>
+                     <div className="space-y-3">
+                       {areaGuide.map((step, idx) => (
+                         <div key={idx} className="flex items-start gap-3">
+                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-sm">
+                             {step.icon}
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Step {idx + 1}</p>
+                             <p className="font-body text-xs text-foreground leading-relaxed">{step.text}</p>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -341,13 +388,23 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
                       className="overflow-hidden"
                     >
                       <div className="px-4 pb-4 pt-0 border-t border-border">
-                        <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium mt-3 mb-2">
-                          How to apply
-                        </p>
-                        <p className="font-body text-xs text-muted-foreground leading-relaxed">
-                          {guide}
-                        </p>
-                      </div>
+                         <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium mt-3 mb-3">
+                           How to apply
+                         </p>
+                         <div className="space-y-3">
+                           {guide.map((step, idx) => (
+                             <div key={idx} className="flex items-start gap-3">
+                               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-sm">
+                                 {step.icon}
+                               </div>
+                               <div className="flex-1 min-w-0">
+                                 <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Step {idx + 1}</p>
+                                 <p className="font-body text-xs text-foreground leading-relaxed">{step.text}</p>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
