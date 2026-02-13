@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck } from "lucide-react";
+import { Sparkles, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface MakeupResult {
@@ -69,6 +69,16 @@ const applicationGuides: Record<string, string> = {
     "Exfoliate lips gently beforehand. Line your lips with a matching liner for definition. Apply lipstick from the center of your upper lip outward, then glide across the lower lip. Blot with a tissue and reapply for longer-lasting color.",
   Highlighter:
     "Smile to find the highest points of your cheekbones. Using a fan brush or fingertip, sweep highlighter along the cheekbone tops, the bridge of your nose, your cupid's bow, and the inner corners of your eyes. Blend edges so the glow looks lit-from-within.",
+  Eyes:
+    "Apply a primer on lids first. Use a flat brush to pat a base shade across the lid, then deepen the crease with a darker tone using a fluffy blending brush. Add shimmer to the center of the lid with your fingertip, and line the lash line with short, feathered strokes.",
+  Lips:
+    "Hydrate lips with balm, then blot. Outline your natural lip shape with a lip liner — slightly overdraw for fullness. Fill in with your chosen color using a lip brush or directly from the bullet, starting at the center and blending outward.",
+  Blush:
+    "Smile and apply blush to the apples of your cheeks using a fluffy brush. Sweep upward toward your temples in a soft, circular motion. Tap off excess product first — it's easier to build than to remove. Cream blush can be applied with fingertips for a dewy finish.",
+  Contour:
+    "Using a matte bronzer or contour stick, draw along the hollows of your cheeks (suck in to find them), jawline, and hairline. Blend thoroughly with a dense brush or sponge using upward strokes. The key is subtlety — harsh lines break the illusion.",
+  Brows:
+    "Brush brows upward with a spoolie. Fill sparse areas with light, hair-like strokes using a pencil or pomade. Follow your natural arch — avoid over-drawing. Set with a clear or tinted brow gel for all-day hold.",
 };
 
 // ─── Shop links ─────────────────────────────────────────────────────
@@ -91,6 +101,7 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
   const [showOriginal, setShowOriginal] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [expandedArea, setExpandedArea] = useState<string | null>(null);
   const recommendedProducts = brandProducts[brand] || defaultProducts;
   const brandDisplayName = brand && brand !== "none"
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
@@ -209,34 +220,70 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
       </motion.div>
 
       {/* Product Recommendations */}
-      {results.map((item, i) => (
-        <motion.div
-          key={item.area}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 + i * 0.08 }}
-          className="bg-card rounded-2xl p-4 border border-border hover:border-gold/20 transition-colors"
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className="w-12 h-12 rounded-xl flex-shrink-0 border border-border shadow-sm"
-              style={{ backgroundColor: item.shade }}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium">
-                {item.area}
-              </p>
-              <p className="font-display text-sm font-semibold text-foreground mt-0.5">
-                {item.product}
-              </p>
-              <p className="font-body text-xs text-muted-foreground mt-1 leading-relaxed">
-                {item.tip}
-              </p>
-            </div>
-            <ChevronRight size={16} className="text-muted-foreground mt-2 flex-shrink-0" />
-          </div>
-        </motion.div>
-      ))}
+      {results.map((item, i) => {
+        const areaKey = item.area;
+        const isAreaExpanded = expandedArea === areaKey;
+        const areaGuide = applicationGuides[areaKey];
+        return (
+          <motion.div
+            key={item.area}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.08 }}
+            className="bg-card rounded-2xl border border-border hover:border-gold/20 transition-colors overflow-hidden"
+          >
+            <button
+              onClick={() => areaGuide && setExpandedArea(isAreaExpanded ? null : areaKey)}
+              className="w-full text-left p-4"
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-12 h-12 rounded-xl flex-shrink-0 border border-border shadow-sm"
+                  style={{ backgroundColor: item.shade }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium">
+                    {item.area}
+                  </p>
+                  <p className="font-display text-sm font-semibold text-foreground mt-0.5">
+                    {item.product}
+                  </p>
+                  <p className="font-body text-xs text-muted-foreground mt-1 leading-relaxed">
+                    {item.tip}
+                  </p>
+                </div>
+                {areaGuide && (
+                  <ChevronDown
+                    size={16}
+                    className={`text-muted-foreground mt-2 flex-shrink-0 transition-transform duration-200 ${isAreaExpanded ? "rotate-180" : ""}`}
+                  />
+                )}
+              </div>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {isAreaExpanded && areaGuide && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4 pt-0 border-t border-border">
+                    <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium mt-3 mb-2">
+                      How to apply
+                    </p>
+                    <p className="font-body text-xs text-muted-foreground leading-relaxed">
+                      {areaGuide}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        );
+      })}
 
       {/* ─── Recommended Products Section ─── */}
       <motion.div
@@ -354,21 +401,39 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="flex gap-3 pt-2"
+        className="space-y-3 pt-2"
       >
-        <button
-          onClick={onStartOver}
-          className="flex-1 py-3.5 rounded-2xl border border-border font-body text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all flex items-center justify-center gap-2"
-        >
-          <RotateCcw size={14} />
-          Start Over
-        </button>
-        <button
-          className="flex-1 py-3.5 rounded-2xl gradient-gold font-display text-sm font-medium text-foreground shadow-lg flex items-center justify-center gap-2"
-        >
-          <Share2 size={14} />
-          Share Look
-        </button>
+        {/* Download enhanced photo */}
+        {enhancedImage && !isEnhancing && (
+          <button
+            onClick={() => {
+              const link = document.createElement("a");
+              link.href = enhancedImage;
+              link.download = "enhanced-beauty-look.png";
+              link.click();
+            }}
+            className="w-full py-3.5 rounded-2xl gradient-gold font-display text-sm font-medium text-foreground shadow-lg flex items-center justify-center gap-2"
+          >
+            <Download size={14} />
+            Save Enhanced Photo
+          </button>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={onStartOver}
+            className="flex-1 py-3.5 rounded-2xl border border-border font-body text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={14} />
+            Start Over
+          </button>
+          <button
+            className="flex-1 py-3.5 rounded-2xl border border-border font-body text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all flex items-center justify-center gap-2"
+          >
+            <Share2 size={14} />
+            Share Look
+          </button>
+        </div>
       </motion.div>
     </div>
   );
