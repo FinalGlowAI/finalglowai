@@ -7,7 +7,7 @@ const Footer = () => {
 
       {/* Brand */}
       <p className="font-display text-lg text-gold tracking-wider text-center mb-4">
-        LUXE
+        Deep Dark & Light Glow
       </p>
 
       {/* About Us */}
@@ -16,7 +16,7 @@ const Footer = () => {
           About Us
         </p>
         <p className="font-body text-xs text-muted-foreground leading-relaxed">
-          LuxGlow is an AI beauty stylist that recommends makeup based on skin tone, outfit and personal style.
+          Deep Dark & Light Glow is an AI beauty stylist that recommends makeup based on skin tone, outfit and personal style.
           Users are matched with beauty products from major brands and redirected to official websites to purchase recommended items.
           We connect users to recommended products from top beauty brands through seamless in-app discovery.
         </p>
@@ -28,14 +28,14 @@ const Footer = () => {
           Disclaimer
         </p>
         <p className="font-body text-[11px] text-muted-foreground/70 leading-relaxed">
-          LuxGlow uses artificial intelligence to generate personalized beauty suggestions.
+          Deep Dark & Light Glow uses artificial intelligence to generate personalized beauty suggestions.
           Results are for guidance and inspiration and may vary depending on individual features and product availability.
         </p>
       </div>
 
       {/* Copyright */}
       <p className="font-body text-[10px] text-muted-foreground/50 text-center mt-4">
-        © {new Date().getFullYear()} LuxGlow. All rights reserved.
+        © {new Date().getFullYear()} Deep Dark & Light Glow. All rights reserved.
       </p>
     </footer>
   );

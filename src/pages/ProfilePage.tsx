@@ -26,7 +26,7 @@ const ProfilePage = () => {
               Privacy First
             </p>
             <p className="font-body text-xs text-foreground/80 mt-1 leading-relaxed">
-              LUXE never stores your photos or personal data. All analysis happens locally on your device.
+              Deep Dark & Light Glow never stores your photos or personal data. All analysis happens locally on your device.
             </p>
           </div>
         </div>
@@ -40,7 +40,7 @@ const ProfilePage = () => {
         {[
           { icon: Eye, label: "Privacy Policy", desc: "How we protect your data" },
           { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files" },
-          { icon: Info, label: "About LUXE", desc: "Version 1.0.0" },
+          { icon: Info, label: "About DD&LG", desc: "Version 1.0.0" },
         ].map((item, i) => {
           const Icon = item.icon;
           return (
@@ -70,7 +70,7 @@ const ProfilePage = () => {
 
       {/* Footer */}
       <div className="mt-10 text-center">
-        <p className="font-display text-lg text-gold tracking-wider">LUXE</p>
+        <p className="font-display text-lg text-gold tracking-wider">Deep Dark & Light Glow</p>
         <p className="font-body text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
           Beauty, Redefined
         </p>
