@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, RotateCcw, Share2, ExternalLink, ShieldCheck } from "lucide-react";
+import { Sparkles, ChevronRight, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface MakeupResult {
@@ -61,6 +61,16 @@ const defaultProducts: BrandProduct[] = [
   { category: "Highlighter", name: "Prismatic Glow Highlighter", shade: "Multi-dimensional shimmer" },
 ];
 
+// ─── How-to-apply guides per category ───────────────────────────────
+const applicationGuides: Record<string, string> = {
+  Foundation:
+    "Start with a pea-sized amount on the back of your hand. Using a damp beauty sponge or foundation brush, dot product on your forehead, cheeks, nose, and chin. Blend outward from the center of your face in light, even strokes. Build coverage gradually — less is more for a natural finish.",
+  Lipstick:
+    "Exfoliate lips gently beforehand. Line your lips with a matching liner for definition. Apply lipstick from the center of your upper lip outward, then glide across the lower lip. Blot with a tissue and reapply for longer-lasting color.",
+  Highlighter:
+    "Smile to find the highest points of your cheekbones. Using a fan brush or fingertip, sweep highlighter along the cheekbone tops, the bridge of your nose, your cupid's bow, and the inner corners of your eyes. Blend edges so the glow looks lit-from-within.",
+};
+
 // ─── Shop links ─────────────────────────────────────────────────────
 const shopLinks = [
   { label: "Buy on Sephora", url: "https://www.sephora.com" },
@@ -80,6 +90,7 @@ const beautyMessages = [
 const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing }: MakeupResultStepProps) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const recommendedProducts = brandProducts[brand] || defaultProducts;
   const brandDisplayName = brand && brand !== "none"
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
@@ -239,25 +250,63 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
         </p>
 
         <div className="space-y-3">
-          {recommendedProducts.map((product, i) => (
-            <motion.div
-              key={product.category}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.45 + i * 0.08 }}
-              className="bg-card rounded-2xl p-4 border border-border"
-            >
-              <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-                {product.category}
-              </p>
-              <p className="font-display text-sm font-semibold text-foreground">
-                {product.name}
-              </p>
-              <p className="font-body text-xs text-muted-foreground mt-0.5">
-                {product.shade}
-              </p>
-            </motion.div>
-          ))}
+          {recommendedProducts.map((product, i) => {
+            const isExpanded = expandedCategory === product.category;
+            const guide = applicationGuides[product.category];
+            return (
+              <motion.div
+                key={product.category}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.45 + i * 0.08 }}
+                className="bg-card rounded-2xl border border-border overflow-hidden"
+              >
+                <button
+                  onClick={() => setExpandedCategory(isExpanded ? null : product.category)}
+                  className="w-full text-left p-4 flex items-center justify-between gap-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                      {product.category}
+                    </p>
+                    <p className="font-display text-sm font-semibold text-foreground">
+                      {product.name}
+                    </p>
+                    <p className="font-body text-xs text-muted-foreground mt-0.5">
+                      {product.shade}
+                    </p>
+                  </div>
+                  {guide && (
+                    <ChevronDown
+                      size={16}
+                      className={`text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                    />
+                  )}
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isExpanded && guide && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 pt-0 border-t border-border">
+                        <p className="font-body text-[10px] uppercase tracking-widest text-gold font-medium mt-3 mb-2">
+                          How to apply
+                        </p>
+                        <p className="font-body text-xs text-muted-foreground leading-relaxed">
+                          {guide}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.div>
 
