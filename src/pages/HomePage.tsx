@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Sparkles, ChevronRight, Shield } from "lucide-react";
 import heroImage from "@/assets/hero-beauty.jpg";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -94,6 +95,8 @@ const HomePage = () => {
           Privacy-first · No data stored · All processing on-device
         </p>
       </motion.div>
+
+      <Footer />
     </div>
   );
 };
