@@ -1,7 +1,44 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Eye, Trash2, Info, ChevronRight } from "lucide-react";
+import { Shield, Eye, Trash2, Info, ChevronRight, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const ProfilePage = () => {
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [clearCacheOpen, setClearCacheOpen] = useState(false);
+
+  const handleClearCache = async () => {
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      localStorage.clear();
+      sessionStorage.clear();
+      toast.success("Cache cleared successfully!");
+    } catch {
+      toast.error("Failed to clear cache");
+    }
+    setClearCacheOpen(false);
+  };
+
+  const settingsItems = [
+    { icon: Eye, label: "Privacy Policy", desc: "How we protect your data", action: () => setPrivacyOpen(true) },
+    { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files", action: () => setClearCacheOpen(true) },
+    { icon: Info, label: "About DD&LG", desc: "Version 1.0.0", action: () => setAboutOpen(true) },
+  ];
+
   return (
     <div className="min-h-screen pb-24 safe-top">
       <div className="px-5 pt-14 pb-6">
@@ -37,11 +74,7 @@ const ProfilePage = () => {
         <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-2 px-1">
           Privacy & Data
         </p>
-        {[
-          { icon: Eye, label: "Privacy Policy", desc: "How we protect your data" },
-          { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files" },
-          { icon: Info, label: "About DD&LG", desc: "Version 1.0.0" },
-        ].map((item, i) => {
+        {settingsItems.map((item, i) => {
           const Icon = item.icon;
           return (
             <motion.button
@@ -49,6 +82,7 @@ const ProfilePage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
+              onClick={item.action}
               className="w-full flex items-center gap-3 p-4 rounded-xl bg-card border border-border text-left hover:border-gold/30 transition-colors"
             >
               <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
@@ -75,6 +109,63 @@ const ProfilePage = () => {
           Beauty, Redefined
         </p>
       </div>
+
+      {/* ── Privacy Policy Dialog ── */}
+      <AlertDialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
+        <AlertDialogContent className="max-w-md max-h-[80vh] overflow-y-auto rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-lg">Privacy Policy</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+                <p><strong className="text-foreground">No data collection.</strong> Deep D'Ark & Light Glow does not collect, store, or share any personal information.</p>
+                <p><strong className="text-foreground">On-device processing.</strong> All face scanning and color analysis run entirely on your device. No images are uploaded to any server.</p>
+                <p><strong className="text-foreground">No accounts required.</strong> You can use the app without creating an account or providing any personal details.</p>
+                <p><strong className="text-foreground">Third-party links.</strong> When you tap "Shop this look," you are redirected to external retailer websites. Their own privacy policies apply.</p>
+                <p><strong className="text-foreground">Cache & local storage.</strong> Temporary data may be stored on your device for performance. You can clear it anytime from the Profile page.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="rounded-xl">Got it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Clear Cache Dialog ── */}
+      <AlertDialog open={clearCacheOpen} onOpenChange={setClearCacheOpen}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-lg">Clear Cache</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all temporary files and local storage. The app will reload fresh.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearCache} className="rounded-xl">Clear</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── About Dialog ── */}
+      <AlertDialog open={aboutOpen} onOpenChange={setAboutOpen}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-lg">About DD&LG</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p className="font-display text-gold text-base">Deep D'Ark & Light Glow</p>
+                <p>Version 1.0.0</p>
+                <p>AI-powered beauty stylist that matches makeup to your outfit, skin tone, and personal style.</p>
+                <p className="text-xs pt-2">© {new Date().getFullYear()} Deep D'Ark & Light Glow. All rights reserved.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="rounded-xl">Close</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
