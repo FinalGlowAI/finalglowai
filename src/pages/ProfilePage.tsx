@@ -36,7 +36,7 @@ const ProfilePage = () => {
   const settingsItems = [
     { icon: Eye, label: "Privacy Policy", desc: "How we protect your data", action: () => setPrivacyOpen(true) },
     { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files", action: () => setClearCacheOpen(true) },
-    { icon: Info, label: "About DD&LG", desc: "Version 1.0.0", action: () => setAboutOpen(true) },
+    { icon: Info, label: "About FinalGlow", desc: "Version 1.0.0", action: () => setAboutOpen(true) },
   ];
 
   return (
@@ -63,7 +63,7 @@ const ProfilePage = () => {
               Privacy First
             </p>
             <p className="font-body text-xs text-foreground/80 mt-1 leading-relaxed">
-              Deep D'Ark & Light Glow never stores your photos or personal data. All analysis happens locally on your device.
+              FinalGlow AI never stores your photos or personal data. All analysis happens locally on your device.
             </p>
           </div>
         </div>
@@ -104,7 +104,7 @@ const ProfilePage = () => {
 
       {/* Footer */}
       <div className="mt-10 text-center">
-        <p className="font-display text-lg text-gold tracking-wider">Deep D'Ark & Light Glow</p>
+        <p className="font-display text-lg text-gold tracking-wider">FinalGlow AI</p>
         <p className="font-body text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
           Beauty, Redefined
         </p>
@@ -117,7 +117,7 @@ const ProfilePage = () => {
             <AlertDialogTitle className="font-display text-lg">Privacy Policy</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
-                <p><strong className="text-foreground">No data collection.</strong> Deep D'Ark & Light Glow does not collect, store, or share any personal information.</p>
+                <p><strong className="text-foreground">No data collection.</strong> FinalGlow AI does not collect, store, or share any personal information.</p>
                 <p><strong className="text-foreground">On-device processing.</strong> All face scanning and color analysis run entirely on your device. No images are uploaded to any server.</p>
                 <p><strong className="text-foreground">No accounts required.</strong> You can use the app without creating an account or providing any personal details.</p>
                 <p><strong className="text-foreground">Third-party links.</strong> When you tap "Shop this look," you are redirected to external retailer websites. Their own privacy policies apply.</p>
@@ -151,13 +151,13 @@ const ProfilePage = () => {
       <AlertDialog open={aboutOpen} onOpenChange={setAboutOpen}>
         <AlertDialogContent className="max-w-sm rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-lg">About DD&LG</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-lg">About FinalGlow</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="font-display text-gold text-base">Deep D'Ark & Light Glow</p>
+                <p className="font-display text-gold text-base">FinalGlow AI</p>
                 <p>Version 1.0.0</p>
                 <p>AI-powered beauty stylist that matches makeup to your outfit, skin tone, and personal style.</p>
-                <p className="text-xs pt-2">© {new Date().getFullYear()} Deep D'Ark & Light Glow. All rights reserved.</p>
+                <p className="text-xs pt-2">© {new Date().getFullYear()} FinalGlow AI. All rights reserved.</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
