@@ -155,33 +155,7 @@ export function renderMakeup(
   // Face oval for masking
   const FACE_OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
 
-  // ── 1. Skin smoothing (luxury airbrush effect) ────────────────────
-  // Multi-pass: light blur on face, then blend back with original for texture retention
-  const smoothCanvas = document.createElement("canvas");
-  smoothCanvas.width = w;
-  smoothCanvas.height = h;
-  const smoothCtx = smoothCanvas.getContext("2d")!;
-  
-  // Pass 1: Moderate blur for skin smoothing
-  smoothCtx.filter = `blur(${params.smoothing + 1}px)`;
-  smoothCtx.save();
-  smoothCtx.beginPath();
-  FACE_OVAL.forEach((idx, i) => {
-    const pt = landmarks[idx];
-    if (i === 0) smoothCtx.moveTo(pt.x * w, pt.y * h);
-    else smoothCtx.lineTo(pt.x * w, pt.y * h);
-  });
-  smoothCtx.closePath();
-  smoothCtx.clip();
-  smoothCtx.drawImage(ctx.canvas, 0, 0);
-  smoothCtx.restore();
-
-  // Blend smoothed skin at reduced opacity to preserve texture
-  ctx.globalAlpha = 0.35;
-  ctx.drawImage(smoothCanvas, 0, 0);
-  ctx.globalAlpha = 1.0;
-
-  // ── 2. Lips – multi-layer with gloss effect ──────────────────────
+  // ── Lips – multi-layer with gloss effect ──────────────────────
   drawBlurredLayer(ctx, w, h, 1.5, "source-over", (offCtx) => {
     // Outer lip fill – main color
     offCtx.fillStyle = hslToRgba(lipH, lipS, lipL, params.lipAlpha);
@@ -329,80 +303,4 @@ export function renderMakeup(
     offCtx.fill();
   });
 
-  // ── 6. Luxury post-processing — campaign-quality finish ──────────
-
-  // 6a. Soft glow / bloom — screen-blend a blurred copy of the face
-  const glowCanvas = document.createElement("canvas");
-  glowCanvas.width = w;
-  glowCanvas.height = h;
-  const glowCtx = glowCanvas.getContext("2d")!;
-  glowCtx.filter = "blur(12px)";
-  glowCtx.save();
-  glowCtx.beginPath();
-  FACE_OVAL.forEach((idx, i) => {
-    const pt = landmarks[idx];
-    if (i === 0) glowCtx.moveTo(pt.x * w, pt.y * h);
-    else glowCtx.lineTo(pt.x * w, pt.y * h);
-  });
-  glowCtx.closePath();
-  glowCtx.clip();
-  glowCtx.drawImage(ctx.canvas, 0, 0);
-  glowCtx.restore();
-
-  ctx.globalCompositeOperation = "screen";
-  ctx.globalAlpha = 0.08;
-  ctx.drawImage(glowCanvas, 0, 0);
-  ctx.globalAlpha = 1.0;
-  ctx.globalCompositeOperation = "source-over";
-
-  // 6b. Warm color grade — subtle warm overlay on face for golden-hour feel
-  const gradeCanvas = document.createElement("canvas");
-  gradeCanvas.width = w;
-  gradeCanvas.height = h;
-  const gradeCtx = gradeCanvas.getContext("2d")!;
-  gradeCtx.save();
-  gradeCtx.beginPath();
-  FACE_OVAL.forEach((idx, i) => {
-    const pt = landmarks[idx];
-    if (i === 0) gradeCtx.moveTo(pt.x * w, pt.y * h);
-    else gradeCtx.lineTo(pt.x * w, pt.y * h);
-  });
-  gradeCtx.closePath();
-  gradeCtx.clip();
-  gradeCtx.fillStyle = "hsla(35, 60%, 75%, 0.06)";
-  gradeCtx.fillRect(0, 0, w, h);
-  gradeCtx.restore();
-
-  ctx.globalCompositeOperation = "overlay";
-  ctx.drawImage(gradeCanvas, 0, 0);
-  ctx.globalCompositeOperation = "source-over";
-
-  // 6c. Directional lighting — top-down soft light gradient for editorial depth
-  const faceCenter = getRegionCenter(landmarks, FACE_OVAL, w, h);
-  const lightGrad = ctx.createLinearGradient(faceCenter[0], faceCenter[1] - h * 0.25, faceCenter[0], faceCenter[1] + h * 0.2);
-  lightGrad.addColorStop(0, "hsla(45, 40%, 95%, 0.06)");
-  lightGrad.addColorStop(0.5, "hsla(45, 40%, 95%, 0.02)");
-  lightGrad.addColorStop(1, "hsla(0, 0%, 0%, 0.03)");
-
-  ctx.save();
-  ctx.beginPath();
-  FACE_OVAL.forEach((idx, i) => {
-    const pt = landmarks[idx];
-    if (i === 0) ctx.moveTo(pt.x * w, pt.y * h);
-    else ctx.lineTo(pt.x * w, pt.y * h);
-  });
-  ctx.closePath();
-  ctx.clip();
-  ctx.globalCompositeOperation = "soft-light";
-  ctx.fillStyle = lightGrad;
-  ctx.fillRect(0, 0, w, h);
-  ctx.restore();
-  ctx.globalCompositeOperation = "source-over";
-
-  // 6d. Subtle vignette for cinematic framing
-  const vignetteGrad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
-  vignetteGrad.addColorStop(0, "hsla(0, 0%, 0%, 0)");
-  vignetteGrad.addColorStop(1, "hsla(0, 0%, 0%, 0.15)");
-  ctx.fillStyle = vignetteGrad;
-  ctx.fillRect(0, 0, w, h);
 }
