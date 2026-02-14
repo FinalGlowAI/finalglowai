@@ -155,30 +155,7 @@ export function renderMakeup(
   // Face oval for masking
   const FACE_OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
 
-  // ── Lips – multi-layer with gloss effect ──────────────────────
-  drawBlurredLayer(ctx, w, h, 1.5, "source-over", (offCtx) => {
-    // Outer lip fill – main color
-    offCtx.fillStyle = hslToRgba(lipH, lipS, lipL, params.lipAlpha);
-    getLandmarkPath(offCtx, landmarks, [...LIPS_OUTER_TOP, ...LIPS_OUTER_BOTTOM.slice(1)], w, h);
-    offCtx.fill();
-
-    // Inner lip – slightly deeper shade for dimension
-    offCtx.fillStyle = hslToRgba(lipH, lipS, Math.max(lipL - 10, 15), params.lipAlpha * 0.5);
-    getLandmarkPath(offCtx, landmarks, [...LIPS_INNER_TOP, ...LIPS_INNER_BOTTOM.slice(1)], w, h);
-    offCtx.fill();
-  });
-
-  // Lip gloss highlight – subtle light streak on lower lip center
-  drawBlurredLayer(ctx, w, h, 3, "source-over", (offCtx) => {
-    const lipCenter = getRegionCenter(landmarks, [14, 17, 87, 317], w, h);
-    const glossGrad = offCtx.createRadialGradient(lipCenter[0], lipCenter[1], 0, lipCenter[0], lipCenter[1], 12);
-    glossGrad.addColorStop(0, `hsla(0, 0%, 100%, ${params.lipAlpha * 0.25})`);
-    glossGrad.addColorStop(1, `hsla(0, 0%, 100%, 0)`);
-    offCtx.fillStyle = glossGrad;
-    offCtx.beginPath();
-    offCtx.arc(lipCenter[0], lipCenter[1], 12, 0, Math.PI * 2);
-    offCtx.fill();
-  });
+  // Lips removed – keeping user's natural lips
 
   // ── 3. Eyeshadow – gradient from lash line upward ────────────────
   const leftEyeIndices = params.eyeExtended ? LEFT_EYE_CREASE : LEFT_EYELID;
@@ -291,16 +268,6 @@ export function renderMakeup(
     offCtx.arc(noseTipCenter[0], noseTipCenter[1], 8, 0, Math.PI * 2);
     offCtx.fill();
 
-    // Cupid's bow highlight
-    const cupidCenter = getRegionCenter(landmarks, [0, 37, 267], w, h);
-    cupidCenter[1] -= 3;
-    const cupidGrad = offCtx.createRadialGradient(cupidCenter[0], cupidCenter[1], 0, cupidCenter[0], cupidCenter[1], 6);
-    cupidGrad.addColorStop(0, `hsla(45, 50%, 92%, ${hlAlpha * 0.5})`);
-    cupidGrad.addColorStop(1, `hsla(45, 50%, 92%, 0)`);
-    offCtx.fillStyle = cupidGrad;
-    offCtx.beginPath();
-    offCtx.arc(cupidCenter[0], cupidCenter[1], 6, 0, Math.PI * 2);
-    offCtx.fill();
   });
 
 }
