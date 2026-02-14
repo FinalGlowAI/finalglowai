@@ -492,6 +492,29 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
             Start Over
           </button>
           <button
+            onClick={async () => {
+              const shareData: ShareData = {
+                title: "My DD&LG Beauty Look",
+                text: `Check out my ${style.replace("_", " ")} beauty look curated by Deep D'Ark & Light Glow!`,
+              };
+              if (enhancedImage) {
+                try {
+                  const res = await fetch(enhancedImage);
+                  const blob = await res.blob();
+                  const file = new File([blob], "beauty-look.png", { type: blob.type });
+                  if (navigator.canShare?.({ files: [file] })) {
+                    shareData.files = [file];
+                  }
+                } catch {}
+              }
+              if (navigator.share) {
+                try { await navigator.share(shareData); } catch {}
+              } else {
+                await navigator.clipboard.writeText(shareData.text || "");
+                const { toast } = await import("sonner");
+                toast.success("Look details copied to clipboard!");
+              }
+            }}
             className="flex-1 py-3.5 rounded-2xl border border-border font-body text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all flex items-center justify-center gap-2"
           >
             <Share2 size={14} />
