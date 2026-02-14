@@ -531,7 +531,7 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
                 getUrl: (text: string) => `https://pinterest.com/pin/create/button/?description=${encodeURIComponent(text)}`,
               },
             ].map((platform) => {
-              const shareText = `Check out my ${style.replace("_", " ")} beauty look curated by Deep D'Ark & Light Glow! ✨💄`;
+              const shareText = `Check out my ${style.replace("_", " ")} beauty look curated by FinalGlow AI! ✨💄`;
               return (
                 <button
                   key={platform.label}
@@ -543,7 +543,7 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
                         const blob = await res.blob();
                         const file = new File([blob], "beauty-look.png", { type: blob.type });
                         const shareData: ShareData = {
-                          title: "My DD&LG Beauty Look",
+                          title: "My FinalGlow Beauty Look",
                           text: shareText,
                         };
                         if (navigator.canShare?.({ files: [file] })) {
@@ -578,9 +578,9 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
           </button>
           <button
             onClick={async () => {
-              const shareText = `Check out my ${style.replace("_", " ")} beauty look curated by Deep D'Ark & Light Glow! ✨💄`;
+              const shareText = `Check out my ${style.replace("_", " ")} beauty look curated by FinalGlow AI! ✨💄`;
               if (navigator.share) {
-                const shareData: ShareData = { title: "My DD&LG Beauty Look", text: shareText };
+                const shareData: ShareData = { title: "My FinalGlow Beauty Look", text: shareText };
                 if (enhancedImage) {
                   try {
                     const res = await fetch(enhancedImage);

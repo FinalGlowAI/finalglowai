@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2}"],
       },
       manifest: {
-        name: "Deep D'Ark & Light Glow — AI Beauty Stylist",
-        short_name: "DD&LG",
+        name: "FinalGlow AI — AI Beauty Stylist",
+        short_name: "FinalGlow",
         description: "Match makeup to your outfit and skin tone with AI precision.",
         theme_color: "#0A0A0A",
         background_color: "#0A0A0A",
