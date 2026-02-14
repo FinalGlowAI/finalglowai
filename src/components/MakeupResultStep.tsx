@@ -533,16 +533,36 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
             ].map((platform) => {
               const shareText = `Check out my ${style.replace("_", " ")} beauty look curated by Deep D'Ark & Light Glow! ✨💄`;
               return (
-                <a
+                <button
                   key={platform.label}
-                  href={platform.getUrl(shareText)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={async () => {
+                    // Try Web Share API with image file first (works on mobile for WhatsApp etc.)
+                    if (navigator.share && enhancedImage) {
+                      try {
+                        const res = await fetch(enhancedImage);
+                        const blob = await res.blob();
+                        const file = new File([blob], "beauty-look.png", { type: blob.type });
+                        const shareData: ShareData = {
+                          title: "My DD&LG Beauty Look",
+                          text: shareText,
+                        };
+                        if (navigator.canShare?.({ files: [file] })) {
+                          shareData.files = [file];
+                        }
+                        await navigator.share(shareData);
+                        return;
+                      } catch (e) {
+                        // User cancelled or API failed — fall through to URL
+                      }
+                    }
+                    // Fallback: open platform URL (text-only)
+                    window.open(platform.getUrl(shareText), "_blank", "noopener,noreferrer");
+                  }}
                   className={`flex items-center justify-center gap-2 py-3 rounded-2xl border font-body text-sm font-medium transition-all ${platform.color}`}
                 >
                   {platform.icon}
                   {platform.label}
-                </a>
+                </button>
               );
             })}
           </div>
