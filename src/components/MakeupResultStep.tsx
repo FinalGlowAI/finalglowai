@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck, Download } from "lucide-react";
+import { Sparkles, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck, Download, Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface MakeupResult {
   area: string;
@@ -146,6 +150,11 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
   const [msgIndex, setMsgIndex] = useState(0);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
+  const [sharingToGlow, setSharingToGlow] = useState(false);
+  const [showGlowCaption, setShowGlowCaption] = useState(false);
+  const [glowCaption, setGlowCaption] = useState("");
+  const { user, subscribed } = useAuth();
+  const navigate = useNavigate();
   const recommendedProducts = brandProducts[brand] || defaultProducts;
   const brandDisplayName = brand && brand !== "none"
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
@@ -481,6 +490,100 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
             <Download size={14} />
             Save Enhanced Photo
           </button>
+        )}
+
+        {/* Share to Glow Community */}
+        {enhancedImage && !isEnhancing && (
+          <div className="space-y-2">
+            {!showGlowCaption ? (
+              <button
+                onClick={() => {
+                  if (!user) {
+                    toast("Sign in to share your glow", { description: "Create a free account first" });
+                    navigate("/auth");
+                    return;
+                  }
+                  if (!subscribed) {
+                    toast("Pro subscription required", { description: "Upgrade to share in the Glow Community" });
+                    navigate("/profile");
+                    return;
+                  }
+                  setShowGlowCaption(true);
+                }}
+                className="w-full py-3.5 rounded-2xl border-2 border-gold/30 bg-gold/5 font-display text-sm font-medium text-foreground hover:bg-gold/10 transition-all flex items-center justify-center gap-2"
+              >
+                <Sparkles size={14} className="text-gold" />
+                Share to Glow Community
+              </button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-2"
+              >
+                <input
+                  type="text"
+                  placeholder="Add a caption… (optional)"
+                  value={glowCaption}
+                  onChange={(e) => setGlowCaption(e.target.value)}
+                  maxLength={100}
+                  className="w-full px-4 py-3 rounded-2xl bg-card border border-border font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition-colors"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setShowGlowCaption(false); setGlowCaption(""); }}
+                    className="flex-1 py-3 rounded-2xl border border-border font-body text-sm text-muted-foreground"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={sharingToGlow}
+                    onClick={async () => {
+                      if (!user || !enhancedImage) return;
+                      setSharingToGlow(true);
+                      try {
+                        // Convert base64/data URL to blob
+                        const res = await fetch(enhancedImage);
+                        const blob = await res.blob();
+                        const fileName = `${user.id}/${Date.now()}.png`;
+
+                        const { error: uploadError } = await supabase.storage
+                          .from("glow-posts")
+                          .upload(fileName, blob, { contentType: "image/png" });
+
+                        if (uploadError) throw uploadError;
+
+                        const { data: urlData } = supabase.storage
+                          .from("glow-posts")
+                          .getPublicUrl(fileName);
+
+                        const { error: insertError } = await supabase.from("glow_posts").insert({
+                          user_id: user.id,
+                          image_url: urlData.publicUrl,
+                          caption: glowCaption.trim() || null,
+                          storage_path: fileName,
+                        });
+
+                        if (insertError) throw insertError;
+
+                        toast.success("Your glow is live! ✨", { description: "Check it out in the Glow Community" });
+                        setShowGlowCaption(false);
+                        setGlowCaption("");
+                      } catch (error: any) {
+                        toast.error(error.message || "Failed to share your glow");
+                      } finally {
+                        setSharingToGlow(false);
+                      }
+                    }}
+                    className="flex-1 py-3 rounded-2xl gradient-gold font-display text-sm font-medium text-foreground flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {sharingToGlow ? "Posting…" : "Post to Glow"}
+                    <Send size={14} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
         )}
 
         {/* Social Media Share Buttons */}
