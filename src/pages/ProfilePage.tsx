@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Eye, Trash2, Info, ChevronRight, X } from "lucide-react";
+import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,11 +12,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
+  const { user, subscribed, subscriptionEnd, signOut } = useAuth();
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const handleClearCache = async () => {
     try {
@@ -33,6 +40,32 @@ const ProfilePage = () => {
     setClearCacheOpen(false);
   };
 
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout");
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start checkout");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to open portal");
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   const settingsItems = [
     { icon: Eye, label: "Privacy Policy", desc: "How we protect your data", action: () => setPrivacyOpen(true) },
     { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files", action: () => setClearCacheOpen(true) },
@@ -46,23 +79,93 @@ const ProfilePage = () => {
           Profile
         </h1>
         <p className="font-body text-sm text-muted-foreground mt-1">
-          Your privacy, your control
+          {user ? user.email : "Your privacy, your control"}
         </p>
       </div>
+
+      {/* Auth / Subscription Banner */}
+      {!user ? (
+        <motion.button
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => navigate("/auth")}
+          className="mx-5 mb-6 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left"
+        >
+          <div className="flex items-center gap-3">
+            <LogIn size={22} className="text-foreground flex-shrink-0" />
+            <div>
+              <p className="font-display text-base font-semibold text-foreground">
+                Sign In
+              </p>
+              <p className="font-body text-xs text-foreground/80 mt-0.5">
+                Create an account to unlock premium features
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-foreground/60 ml-auto" />
+          </div>
+        </motion.button>
+      ) : !subscribed ? (
+        <motion.button
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={handleCheckout}
+          disabled={checkoutLoading}
+          className="mx-5 mb-6 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
+        >
+          <div className="flex items-center gap-3">
+            <Crown size={22} className="text-foreground flex-shrink-0" />
+            <div>
+              <p className="font-display text-base font-semibold text-foreground">
+                Upgrade to Pro — $4.99/mo
+              </p>
+              <p className="font-body text-xs text-foreground/80 mt-0.5">
+                Unlock "See My Look" face scan & AI enhancement
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-foreground/60 ml-auto" />
+          </div>
+        </motion.button>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-5 mb-6 rounded-2xl gradient-gold p-5"
+        >
+          <div className="flex items-start gap-3">
+            <Crown size={22} className="text-foreground flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-display text-base font-semibold text-foreground">
+                FinalGlow Pro
+              </p>
+              <p className="font-body text-xs text-foreground/80 mt-0.5">
+                Active{subscriptionEnd ? ` · Renews ${new Date(subscriptionEnd).toLocaleDateString()}` : ""}
+              </p>
+              <button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="font-body text-xs text-foreground underline mt-2 disabled:opacity-60"
+              >
+                {portalLoading ? "Loading…" : "Manage Subscription"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Privacy Banner */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-5 mb-6 rounded-2xl gradient-gold p-5"
+        transition={{ delay: 0.1 }}
+        className="mx-5 mb-6 rounded-2xl bg-card border border-border p-5"
       >
         <div className="flex items-start gap-3">
-          <Shield size={22} className="text-foreground flex-shrink-0 mt-0.5" />
+          <Shield size={22} className="text-muted-foreground flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-display text-base font-semibold text-foreground">
               Privacy First
             </p>
-            <p className="font-body text-xs text-foreground/80 mt-1 leading-relaxed">
+            <p className="font-body text-xs text-muted-foreground mt-1 leading-relaxed">
               FinalGlow AI never stores your photos or personal data. All analysis happens locally on your device.
             </p>
           </div>
@@ -81,7 +184,7 @@ const ProfilePage = () => {
               key={item.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: 0.15 + i * 0.08 }}
               onClick={item.action}
               className="w-full flex items-center gap-3 p-4 rounded-xl bg-card border border-border text-left hover:border-gold/30 transition-colors"
             >
@@ -100,6 +203,25 @@ const ProfilePage = () => {
             </motion.button>
           );
         })}
+
+        {/* Sign Out */}
+        {user && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            onClick={async () => { await signOut(); toast.success("Signed out"); }}
+            className="w-full flex items-center gap-3 p-4 rounded-xl bg-card border border-border text-left hover:border-destructive/30 transition-colors"
+          >
+            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+              <LogOut size={16} className="text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="font-body text-sm font-medium text-foreground">Sign Out</p>
+              <p className="font-body text-xs text-muted-foreground">{user.email}</p>
+            </div>
+          </motion.button>
+        )}
       </div>
 
       {/* Footer */}
