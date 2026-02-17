@@ -70,7 +70,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) {
       checkSubscription();
       const interval = setInterval(checkSubscription, 60000);
-      return () => clearInterval(interval);
+
+      // Re-check when tab regains focus (e.g. returning from Stripe checkout)
+      const handleVisibility = () => {
+        if (document.visibilityState === "visible") {
+          checkSubscription();
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibility);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener("visibilitychange", handleVisibility);
+      };
     } else {
       setSubscribed(false);
       setSubscriptionEnd(null);
