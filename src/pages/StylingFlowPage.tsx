@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Shirt, Sparkles, Gem, Footprints, Check, Camera,
   ArrowLeft, ArrowRight, Crown, Heart, Star, Zap,
-  Flower2, Moon, Sun, CircleDot, Briefcase,
+  Flower2, Moon, Sun, CircleDot, Briefcase, Lock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FaceScanStep from "@/components/FaceScanStep";
 import MakeupResultStep from "@/components/MakeupResultStep";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ─── STEP TYPES ───
 type FlowStep = "outfit" | "style" | "skin" | "brand" | "scan" | "result";
@@ -189,6 +190,7 @@ const brands = [
 // ─── MAIN COMPONENT ───
 const StylingFlowPage = () => {
   const navigate = useNavigate();
+  const { user, subscribed } = useAuth();
   const [currentStep, setCurrentStep] = useState<FlowStep>("outfit");
   const [direction, setDirection] = useState(1);
 
@@ -242,6 +244,16 @@ const StylingFlowPage = () => {
   };
 
   const handleFinish = () => {
+    if (!user) {
+      toast("Sign in to see your look", { description: "Create a free account to unlock Face Scan" });
+      navigate("/auth");
+      return;
+    }
+    if (!subscribed) {
+      toast("Pro subscription required", { description: "Upgrade to FinalGlow Pro to see your look" });
+      navigate("/profile");
+      return;
+    }
     setDirection(1);
     setCurrentStep("scan");
   };
@@ -977,8 +989,8 @@ const StylingFlowPage = () => {
           >
             {currentStep === "brand" ? (
               <>
-                <Camera size={18} />
-                Start Face Scan
+                {(!user || !subscribed) ? <Lock size={18} /> : <Camera size={18} />}
+                {(!user || !subscribed) ? "Unlock Face Scan — Pro" : "Start Face Scan"}
               </>
             ) : (
               <>
