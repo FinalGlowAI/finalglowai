@@ -12,6 +12,7 @@ import StylingFlowPage from "./pages/StylingFlowPage";
 import StylistPage from "./pages/StylistPage";
 import ColorAnalysisPage from "./pages/ColorAnalysisPage";
 import ProfilePage from "./pages/ProfilePage";
+import CommunityPage from "./pages/CommunityPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const AppContent = () => {
           <Route path="/outfit" element={<StylingFlowPage />} />
           <Route path="/stylist" element={<StylistPage />} />
           <Route path="/colors" element={<ColorAnalysisPage />} />
+          <Route path="/community" element={<CommunityPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

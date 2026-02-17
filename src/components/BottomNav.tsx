@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Sparkles, Palette, User } from "lucide-react";
+import { Home, Sparkles, Palette, User, Flame } from "lucide-react";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/outfit", icon: Sparkles, label: "Stylist" },
+  { path: "/community", icon: Flame, label: "Glow" },
   { path: "/colors", icon: Palette, label: "Colors" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
