@@ -1,11 +1,11 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shirt, Sparkles, Gem, Footprints, Check, Camera,
   ArrowLeft, ArrowRight, Crown, Heart, Star, Zap,
   Flower2, Moon, Sun, CircleDot, Briefcase, Lock,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FaceScanStep from "@/components/FaceScanStep";
@@ -190,7 +190,19 @@ const brands = [
 // ─── MAIN COMPONENT ───
 const StylingFlowPage = () => {
   const navigate = useNavigate();
-  const { user, subscribed } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, subscribed, checkSubscription } = useAuth();
+
+  // Auto-refresh subscription after returning from Stripe checkout
+  useEffect(() => {
+    if (searchParams.get("subscribed") === "true") {
+      checkSubscription().then(() => {
+        toast.success("Welcome to FinalGlow Pro! ✨");
+      });
+      // Clean up the URL
+      navigate("/outfit", { replace: true });
+    }
+  }, [searchParams]);
   const [currentStep, setCurrentStep] = useState<FlowStep>("outfit");
   const [direction, setDirection] = useState(1);
 
