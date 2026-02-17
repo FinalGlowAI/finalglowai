@@ -24,6 +24,7 @@ const ProfilePage = () => {
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
 
   const handleClearCache = async () => {
     try {
@@ -40,10 +41,12 @@ const ProfilePage = () => {
     setClearCacheOpen(false);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (couponCode?: string) => {
     setCheckoutLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout");
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: couponCode ? { couponCode } : {},
+      });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
@@ -105,26 +108,53 @@ const ProfilePage = () => {
           </div>
         </motion.button>
       ) : !subscribed ? (
-        <motion.button
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={handleCheckout}
-          disabled={checkoutLoading}
-          className="mx-5 mb-6 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
-        >
-          <div className="flex items-center gap-3">
-            <Crown size={22} className="text-foreground flex-shrink-0" />
-            <div>
-              <p className="font-display text-base font-semibold text-foreground">
-                Upgrade to Pro — $6.99/mo
-              </p>
-              <p className="font-body text-xs text-foreground/80 mt-0.5">
-                Unlock "See My Look" face scan & AI enhancement
-              </p>
+        <>
+          <motion.button
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => handleCheckout()}
+            disabled={checkoutLoading}
+            className="mx-5 mb-6 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
+          >
+            <div className="flex items-center gap-3">
+              <Crown size={22} className="text-foreground flex-shrink-0" />
+              <div>
+                <p className="font-display text-base font-semibold text-foreground">
+                  Upgrade to Pro — $6.99/mo
+                </p>
+                <p className="font-body text-xs text-foreground/80 mt-0.5">
+                  Unlock "See My Look" face scan & AI enhancement
+                </p>
+              </div>
+              <ChevronRight size={18} className="text-foreground/60 ml-auto" />
             </div>
-            <ChevronRight size={18} className="text-foreground/60 ml-auto" />
-          </div>
-        </motion.button>
+          </motion.button>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mx-5 mb-6 rounded-2xl bg-card border border-border p-4"
+          >
+            <p className="font-body text-xs text-muted-foreground mb-2">Have a promo code?</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Enter code"
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/40"
+              />
+              <button
+                onClick={() => handleCheckout(promoCode)}
+                disabled={checkoutLoading || !promoCode.trim()}
+                className="rounded-xl gradient-gold px-4 py-2 font-body text-sm font-medium text-foreground disabled:opacity-50"
+              >
+                {checkoutLoading ? "…" : "Apply"}
+              </button>
+            </div>
+          </motion.div>
+        </>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
