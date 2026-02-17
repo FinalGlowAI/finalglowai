@@ -54,12 +54,15 @@ serve(async (req) => {
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       try {
-        const endTimestamp = subscription.current_period_end;
+        // Try top-level first, then fall back to item-level (varies by Stripe API version)
+        const endTimestamp =
+          subscription.current_period_end ??
+          subscription.items?.data?.[0]?.current_period_end;
         if (endTimestamp && typeof endTimestamp === "number") {
           subscriptionEnd = new Date(endTimestamp * 1000).toISOString();
         }
       } catch {
-        // If date conversion fails, leave subscriptionEnd as null
+        // Leave subscriptionEnd as null
       }
     }
 
