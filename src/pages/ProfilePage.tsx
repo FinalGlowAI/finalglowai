@@ -22,9 +22,8 @@ const ProfilePage = () => {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
 
   const handleClearCache = async () => {
     try {
@@ -41,19 +40,8 @@ const ProfilePage = () => {
     setClearCacheOpen(false);
   };
 
-  const handleCheckout = async (couponCode?: string) => {
-    setCheckoutLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: couponCode ? { couponCode } : {},
-      });
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to start checkout");
-    } finally {
-      setCheckoutLoading(false);
-    }
+  const handleCheckout = () => {
+    window.location.href = "https://buy.stripe.com/bJe28k15X0qPgaD2R23Nm02";
   };
 
   const handleManageSubscription = async () => {
@@ -129,31 +117,6 @@ const ProfilePage = () => {
               <ChevronRight size={18} className="text-foreground/60 ml-auto" />
             </div>
           </motion.button>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mx-5 mb-6 rounded-2xl bg-card border border-border p-4"
-          >
-            <p className="font-body text-xs text-muted-foreground mb-2">Have a promo code?</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                placeholder="Enter code"
-                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/40"
-              />
-              <button
-                onClick={() => handleCheckout(promoCode)}
-                disabled={checkoutLoading || !promoCode.trim()}
-                className="rounded-xl gradient-gold px-4 py-2 font-body text-sm font-medium text-foreground disabled:opacity-50"
-              >
-                {checkoutLoading ? "…" : "Apply"}
-              </button>
-            </div>
-          </motion.div>
         </>
       ) : (
         <motion.div
