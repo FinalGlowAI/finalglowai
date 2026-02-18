@@ -41,7 +41,7 @@ const ProfilePage = () => {
   };
 
   const handleCheckout = () => {
-    window.location.href = "https://buy.stripe.com/bJe28k15X0qPgaD2R23Nm02";
+    window.open("https://buy.stripe.com/bJe28k15X0qPgaD2R23Nm02", "_blank");
   };
 
   const handleManageSubscription = async () => {
