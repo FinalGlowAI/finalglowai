@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 async function pollPrediction(predictionUrl: string, apiToken: string): Promise<string> {
-  const maxAttempts = 30;
+  const maxAttempts = 60;
   const pollInterval = 2000;
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -26,7 +26,6 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
 
     if (data.status === "succeeded") {
       const output = data.output;
-      // Output can be a string URL or an array of URLs
       const imageUrl = Array.isArray(output) ? output[0] : output;
       if (!imageUrl) throw new Error("No image URL in completed prediction");
       return imageUrl;
@@ -35,10 +34,47 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
     if (data.status === "failed" || data.status === "canceled") {
       throw new Error(`Prediction ${data.status}: ${data.error || "Unknown error"}`);
     }
-    // starting or processing — keep polling
   }
 
-  throw new Error("Prediction timed out after 60 seconds");
+  throw new Error("Prediction timed out after 120 seconds");
+}
+
+function buildPrompt(makeupConfig: any, style: string): string {
+  const styleDesc: Record<string, string> = {
+    luxury: "ultra-luxurious Dior haute couture campaign, opulent golden lighting, rich jewel tones, flawless porcelain finish",
+    classy: "timeless Vogue editorial, sophisticated neutral palette, elegant studio lighting, refined beauty",
+    elegant: "Harper's Bazaar cover shoot, graceful and polished, soft diffused lighting, understated glamour",
+    soft_glam: "Glossier campaign aesthetic, dewy radiant skin, effortless beauty, soft warm glow",
+    natural: "barely-there fresh-faced beauty, dewy minimal makeup, clean luminous skin, natural light",
+    party: "Met Gala red carpet glam, bold dramatic makeup, sparkling highlights, dazzling evening look",
+    clean_girl: "Hailey Bieber clean girl aesthetic, glass skin, slicked back hair, minimal dewy perfection",
+    bold: "high-fashion editorial with statement-making intensity, dramatic contour, bold color payoff",
+  };
+
+  const selectedStyle = styleDesc[style] || styleDesc.luxury;
+
+  const lipColor = makeupConfig?.lipColor || "rose";
+  const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
+  const blushColor = makeupConfig?.blushColor || "peach";
+  const outfitColor = makeupConfig?.outfitColor || "";
+  const background = makeupConfig?.background || "soft bokeh studio";
+
+  let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
+  prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
+  prompt += `Makeup: ${lipColor} lips, ${eyeshadowColor} eyeshadow, ${blushColor} blush. `;
+  prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
+  prompt += `Professional color grading with warm luxurious tones. `;
+  prompt += `Cinematic depth of field with ${background} background. `;
+
+  if (outfitColor) {
+    prompt += `Wearing ${outfitColor} outfit. `;
+  }
+
+  prompt += `Preserve exact face identity, features, bone structure, and expression. `;
+  prompt += `Result should look like a Sephora or Dior campaign photo. `;
+  prompt += `Photorealistic quality, NOT cartoon, NOT painting, NOT AI-looking.`;
+
+  return prompt;
 }
 
 serve(async (req) => {
@@ -61,38 +97,14 @@ serve(async (req) => {
       throw new Error("REPLICATE_API_TOKEN is not configured");
     }
 
-    const styleDesc: Record<string, string> = {
-      luxury: "Dior haute couture campaign with opulent, refined elegance",
-      classy: "Vogue editorial with timeless sophistication",
-      elegant: "Harper's Bazaar cover with graceful polish",
-      soft_glam: "Glossier campaign with effortless radiance",
-      natural: "barely-there dewy beauty, fresh and minimal",
-      party: "Met Gala glam with bold, dazzling drama",
-      clean_girl: "Hailey Bieber clean girl aesthetic, dewy minimal",
-      bold: "high-fashion editorial with statement-making intensity",
-    };
-
-    const selectedStyle = styleDesc[style] || "luxury beauty campaign";
-
-    const prompt = `Transform this selfie into an ultra-realistic, high-end beauty portrait. Style: ${selectedStyle}.
-
-Requirements:
-- Keep the EXACT same face, features, identity, and expression
-- Apply flawless, airbrushed skin with realistic pore texture preserved
-- Add soft studio lighting with gentle highlights on cheekbones and nose bridge
-- Apply the makeup look: lip color ${makeupConfig?.lipColor || "rose"}, eye shadow ${makeupConfig?.eyeshadowColor || "gold"}, blush ${makeupConfig?.blushColor || "peach"}
-- Add a subtle warm golden glow and soft bokeh background
-- The result should look like a Sephora or Dior campaign photo
-- Maintain photorealistic quality — NOT cartoon, NOT painting, NOT AI-looking
-- Professional color grading with warm, luxurious tones
-- Soft vignette and cinematic depth of field`;
+    const prompt = buildPrompt(makeupConfig, style);
 
     // Ensure the image is a proper data URI
     const imageUri = imageBase64.startsWith("data:")
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`;
 
-    // Create prediction on Replicate using SDXL img2img
+    // Create prediction using black-forest-labs/flux-kontext-pro
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -100,14 +112,13 @@ Requirements:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+        version: "9c1ab864e84211b8116a6af83f98c032464a48fa74afd7be4be31407b30e6a1b",
         input: {
-          image: imageUri,
           prompt: prompt,
-          negative_prompt: "cartoon, painting, illustration, anime, deformed, ugly, blurry, low quality, watermark, text",
-          strength: 0.35,
-          guidance_scale: 7.5,
-          num_inference_steps: 30,
+          image: imageUri,
+          aspect_ratio: "match_input_image",
+          output_format: "jpg",
+          safety_tolerance: 2,
         },
       }),
     });
@@ -149,19 +160,9 @@ Requirements:
     // Poll for result
     const imageUrl = await pollPrediction(predictionUrl, REPLICATE_API_TOKEN);
 
-    // Fetch the image and convert to base64 data URL
-    const imgRes = await fetch(imageUrl);
-    if (!imgRes.ok) {
-      throw new Error("Failed to download enhanced image");
-    }
-    const imgBuffer = await imgRes.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(imgBuffer).reduce((s, b) => s + String.fromCharCode(b), "")
-    );
-    const enhancedImage = `data:image/png;base64,${base64}`;
-
+    // Return the generated image URL directly (flux-kontext-pro returns a hosted URL)
     return new Response(
-      JSON.stringify({ enhancedImage }),
+      JSON.stringify({ enhancedImage: imageUrl }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
