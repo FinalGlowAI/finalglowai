@@ -235,7 +235,7 @@ const StylingFlowPage = () => {
       setDirection(-1);
       setCurrentStep(stepLabels[idx - 1].key);
     } else {
-      navigate("/");
+      navigate("/home");
     }
   }, [currentStep, navigate]);
 

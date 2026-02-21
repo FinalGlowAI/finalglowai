@@ -29,13 +29,13 @@ const AppContent = () => {
       )}
       <div className="max-w-lg mx-auto relative">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/outfit" element={<StylingFlowPage />} />
           <Route path="/stylist" element={<StylistPage />} />
           <Route path="/colors" element={<ColorAnalysisPage />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/auth" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

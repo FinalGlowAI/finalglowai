@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Home, Sparkles, Palette, User, Flame } from "lucide-react";
 
 const tabs = [
-  { path: "/", icon: Home, label: "Home" },
+  { path: "/home", icon: Home, label: "Home" },
   { path: "/outfit", icon: Sparkles, label: "Stylist" },
   { path: "/community", icon: Flame, label: "Glow" },
   { path: "/colors", icon: Palette, label: "Colors" },
