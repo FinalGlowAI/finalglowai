@@ -39,7 +39,15 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
   throw new Error("Prediction timed out after 120 seconds");
 }
 
-function buildPrompt(makeupConfig: any, style: string): string {
+function buildPrompt(makeupConfig: any, style: string, intensity: number = 50): string {
+  // intensity: 0 = barely there, 50 = medium, 100 = full glam
+  const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
+
+  const intensityDesc: Record<string, string> = {
+    light: "very subtle, barely-there makeup with a natural no-makeup look, sheer coverage",
+    medium: "balanced, polished makeup with visible but refined application",
+    full: "full-coverage, dramatic high-impact makeup with bold pigmentation and statement look",
+  };
   const styleDesc: Record<string, string> = {
     luxury: "ultra-luxurious Dior haute couture campaign, opulent golden lighting, rich jewel tones, flawless porcelain finish",
     classy: "timeless Vogue editorial, sophisticated neutral palette, elegant studio lighting, refined beauty",
@@ -60,6 +68,7 @@ function buildPrompt(makeupConfig: any, style: string): string {
   const background = makeupConfig?.background || "soft bokeh studio";
 
   let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
+  prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
   prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
   prompt += `Makeup: ${lipColor} lips, ${eyeshadowColor} eyeshadow, ${blushColor} blush. `;
   prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
@@ -83,7 +92,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, makeupConfig, style } = await req.json();
+    const { imageBase64, makeupConfig, style, intensity } = await req.json();
 
     if (!imageBase64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
@@ -97,7 +106,7 @@ serve(async (req) => {
       throw new Error("REPLICATE_API_TOKEN is not configured");
     }
 
-    const prompt = buildPrompt(makeupConfig, style);
+    const prompt = buildPrompt(makeupConfig, style, intensity);
 
     // Ensure the image is a proper data URI
     const imageUri = imageBase64.startsWith("data:")
