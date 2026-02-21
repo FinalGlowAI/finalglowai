@@ -113,18 +113,18 @@ serve(async (req) => {
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`;
 
-    // Create prediction using black-forest-labs/flux-kontext-pro
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    // Create prediction using black-forest-labs/flux-kontext-pro (official model)
+    const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
+        "Prefer": "wait",
       },
       body: JSON.stringify({
-        version: "9c1ab864e84211b8116a6af83f98c032464a48fa74afd7be4be31407b30e6a1b",
         input: {
           prompt: prompt,
-          image: imageUri,
+          input_image: imageUri,
           aspect_ratio: "match_input_image",
           output_format: "jpg",
           safety_tolerance: 2,
@@ -156,8 +156,26 @@ serve(async (req) => {
     }
 
     const prediction = await response.json();
-    const predictionUrl = prediction.urls?.get;
 
+    // With Prefer: wait, the prediction may already be completed
+    if (prediction.status === "succeeded" && prediction.output) {
+      const imageUrl = typeof prediction.output === "string" ? prediction.output : prediction.output[0];
+      return new Response(
+        JSON.stringify({ enhancedImage: imageUrl }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (prediction.status === "failed" || prediction.status === "canceled") {
+      console.error("Prediction failed:", prediction.error);
+      return new Response(
+        JSON.stringify({ error: prediction.error || "Image enhancement failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Otherwise poll for result
+    const predictionUrl = prediction.urls?.get;
     if (!predictionUrl) {
       console.error("No prediction URL in response:", JSON.stringify(prediction));
       return new Response(
@@ -166,10 +184,7 @@ serve(async (req) => {
       );
     }
 
-    // Poll for result
     const imageUrl = await pollPrediction(predictionUrl, REPLICATE_API_TOKEN);
-
-    // Return the generated image URL directly (flux-kontext-pro returns a hosted URL)
     return new Response(
       JSON.stringify({ enhancedImage: imageUrl }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
