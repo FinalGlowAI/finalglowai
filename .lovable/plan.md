@@ -1,76 +1,75 @@
 
-# Replace Gemini with Alibaba Cloud Qwen Image Edit API
+
+# Replace DashScope with Replicate API
 
 ## What Changes
 
-The current photo enhancement uses Google Gemini via the Lovable AI Gateway. We'll replace it with **Alibaba Cloud's Qwen Image Edit** (DashScope API), a low-cost Chinese AI image editing model that can transform selfies into beauty portraits based on text prompts.
+The current `enhance-beauty` edge function uses Alibaba Cloud DashScope (which has an invalid API key). We'll replace it with **Replicate**, a reliable API for running open-source AI models including image-to-image beauty enhancement.
 
-## Why Qwen Image Edit
+## Replicate Model
 
-- **Cost**: ~$0.025-0.035 per image (significantly cheaper)
-- **Quality**: 20B parameter model, strong at style transfer and face preservation
-- **API**: Simple REST API with base64 image input/output
-- **Availability**: International endpoint available (Singapore region)
+We'll use a suitable image-to-image model on Replicate (e.g. `tencentarc/photomaker-style` or `stability-ai/sdxl` with img2img) that can transform selfies into beauty portraits while preserving face identity. Replicate has a simple REST API with async polling, similar to DashScope.
 
 ## What You'll Need To Do
 
-1. **Create a free Alibaba Cloud account** at [alibabacloud.com](https://www.alibabacloud.com)
-2. Go to **Model Studio** and get a **DashScope API Key**
-3. You'll be prompted to enter this API key securely in the app
+1. **Create a Replicate account** at [replicate.com](https://replicate.com)
+2. Go to **Account Settings > API Tokens** and copy your API token
+3. You'll be prompted to enter this token securely in the app
 
 ## Steps
 
-### Step 1 — Store the DashScope API Key
-- Securely store your Alibaba Cloud DashScope API key as a secret (`DASHSCOPE_API_KEY`)
+### Step 1 -- Store the Replicate API Token
+- Add a new secret `REPLICATE_API_TOKEN` to the project
+- The existing `DASHSCOPE_API_KEY` can be removed afterward
 
-### Step 2 — Update the `enhance-beauty` Edge Function
-- Remove all Google Gemini / Lovable AI Gateway code
-- Call the DashScope international endpoint: `https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation`
-- Use the `qwen-image-edit` model
-- Send the user's base64 selfie + the beauty transformation prompt
-- The API is **asynchronous** — it returns a task ID first, then we poll for the result
-- Parse the output image URL from the response and return it
+### Step 2 -- Rewrite the `enhance-beauty` Edge Function
+- Remove all DashScope/Alibaba Cloud code
+- Call the Replicate API to create a prediction:
+  - `POST https://api.replicate.com/v1/predictions`
+  - Use an img2img model that preserves face identity (e.g. `bytedance/sdxl-lightning-4step` for speed, or a face-swap/beauty model)
+- Send the user's base64 selfie as a data URI + the beauty transformation prompt
+- Keep the same style descriptions and makeup config prompt logic
 
-### Step 3 — Handle Async Polling
-- DashScope image generation is async: submit a task, then poll a status endpoint until the image is ready
-- The edge function will handle this internally with a polling loop (max ~60 seconds timeout)
-- Return the final image as a base64 data URL or direct URL to the frontend
+### Step 3 -- Handle Async Polling
+- Replicate predictions are async: submit, then poll `GET /v1/predictions/{id}` until status is `succeeded`
+- Polling every 2 seconds, max ~60 seconds timeout
+- Return the output image URL, fetch it, and convert to base64 data URL
 
-### Step 4 — Error Handling
-- Handle rate limits, authentication errors, and task failures gracefully
-- Keep the same error response format so the frontend doesn't need changes
+### Step 4 -- Error Handling
+- Handle rate limits, auth errors, and failed predictions
+- Keep the same response format (`{ enhancedImage: "data:image/..." }`) so the frontend needs no changes
 
 ## Technical Details
 
-The DashScope API call structure:
-
 ```text
-POST https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation
+POST https://api.replicate.com/v1/predictions
 Headers:
-  Authorization: Bearer DASHSCOPE_API_KEY
+  Authorization: Bearer REPLICATE_API_TOKEN
   Content-Type: application/json
-  X-DashScope-Async: enable (for async mode)
 
 Body:
-  model: "qwen-image-edit"
-  input.messages: [{ role: "user", content: [{ image: base64 }, { text: prompt }] }]
-  parameters: { n: 1, size: "1024*1024" }
+  version: "<model_version_hash>"
+  input: {
+    image: "data:image/jpeg;base64,...",
+    prompt: "ultra-realistic beauty portrait..."
+  }
 ```
 
-Then poll:
+Poll:
 ```text
-GET https://dashscope-intl.aliyuncs.com/api/v1/tasks/{task_id}
+GET https://api.replicate.com/v1/predictions/{prediction_id}
 Headers:
-  Authorization: Bearer DASHSCOPE_API_KEY
+  Authorization: Bearer REPLICATE_API_TOKEN
 ```
 
 ## What Stays the Same
 
-- The frontend code (MakeupResultStep, StylingFlowPage) remains unchanged
-- The same prompt structure (style descriptions, makeup config) is preserved
-- The response format (`{ enhancedImage: "data:image/..." }`) stays identical
-- No visual or UX changes for your users
+- The frontend code remains completely unchanged
+- Same prompt structure (style descriptions, makeup config)
+- Same response format (`{ enhancedImage: "data:image/..." }`)
+- No visual or UX changes
 
 ## Files Modified
 
-- `supabase/functions/enhance-beauty/index.ts` — rewritten to use DashScope API
+- `supabase/functions/enhance-beauty/index.ts` -- rewritten to use Replicate API
+
