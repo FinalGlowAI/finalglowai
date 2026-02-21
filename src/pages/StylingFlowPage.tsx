@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import FaceScanStep from "@/components/FaceScanStep";
 import MakeupResultStep from "@/components/MakeupResultStep";
 import { useAuth } from "@/contexts/AuthContext";
+import { Slider } from "@/components/ui/slider";
 
 // ─── STEP TYPES ───
 type FlowStep = "outfit" | "style" | "skin" | "brand" | "scan" | "result";
@@ -213,6 +214,7 @@ const StylingFlowPage = () => {
   const [selectedSkin, setSelectedSkin] = useState<number | null>(null);
   const [autoDetect, setAutoDetect] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [makeupIntensity, setMakeupIntensity] = useState(50); // 0-100: light → full
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -280,6 +282,7 @@ const StylingFlowPage = () => {
     setSelectedSkin(null);
     setAutoDetect(false);
     setSelectedBrand(null);
+    setMakeupIntensity(50);
     setCapturedImage(null);
     setEnhancedImage(null);
   };
@@ -433,6 +436,7 @@ const StylingFlowPage = () => {
           imageBase64: capturedImageBase64,
           makeupConfig,
           style: selectedVibe || "elegant",
+          intensity: makeupIntensity,
         },
       });
 
@@ -446,7 +450,7 @@ const StylingFlowPage = () => {
     } finally {
       setIsEnhancing(false);
     }
-  }, [makeupConfig, selectedVibe]);
+  }, [makeupConfig, selectedVibe, makeupIntensity]);
 
   const selectColor = (categoryId: string, colorValue: string) => {
     setOutfitSelections((prev) => ({
@@ -748,6 +752,34 @@ const StylingFlowPage = () => {
                 );
               })}
             </div>
+
+            {/* Makeup Intensity Slider */}
+            {selectedVibe && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 rounded-2xl bg-card border border-border"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-display text-sm font-medium text-foreground">Makeup Intensity</p>
+                  <span className="font-body text-xs text-gold font-medium">
+                    {makeupIntensity <= 30 ? "Light" : makeupIntensity <= 65 ? "Medium" : "Full Glam"}
+                  </span>
+                </div>
+                <Slider
+                  value={[makeupIntensity]}
+                  onValueChange={(v) => setMakeupIntensity(v[0])}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+                <div className="flex justify-between mt-2">
+                  <span className="font-body text-[10px] text-muted-foreground">Barely there</span>
+                  <span className="font-body text-[10px] text-muted-foreground">Full glam</span>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         )}
 
