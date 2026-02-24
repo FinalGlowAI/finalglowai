@@ -5,6 +5,8 @@ import heroImage from "@/assets/hero-beauty.jpg";
 import heroBrown from "@/assets/hero-beauty-brown.jpg";
 import heroDark from "@/assets/hero-beauty-dark.jpg";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import Footer from "@/components/Footer";
 
 const heroImages = [heroImage, heroBrown, heroDark];
@@ -34,8 +36,18 @@ const steps = [
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
   const howItWorksRef = useRef<HTMLDivElement>(null);
+
+  const handleProtectedNav = (path: string) => {
+    if (!user) {
+      toast.info("Please sign in first");
+      navigate("/");
+    } else {
+      navigate(path);
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -90,7 +102,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          onClick={() => navigate("/outfit")}
+          onClick={() => handleProtectedNav("/outfit")}
           className="w-full gradient-gold rounded-2xl p-5 flex items-center justify-between shadow-lg"
         >
           <div className="flex items-center gap-3">
@@ -111,7 +123,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.5 }}
-          onClick={() => navigate("/colors")}
+          onClick={() => handleProtectedNav("/colors")}
           className="w-full bg-card rounded-2xl p-5 flex items-center justify-between border border-border"
         >
           <div className="flex items-center gap-3">
@@ -211,7 +223,7 @@ const HomePage = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          onClick={() => navigate("/outfit")}
+          onClick={() => handleProtectedNav("/outfit")}
           className="w-full gradient-gold rounded-2xl p-4 mt-6 flex items-center justify-center gap-2 shadow-lg"
         >
           <Sparkles size={18} className="text-foreground" />
