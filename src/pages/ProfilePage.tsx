@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn } from "lucide-react";
 import {
@@ -18,7 +18,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, subscribed, subscriptionEnd, signOut } = useAuth();
+  const { user, subscribed, subscriptionEnd, signOut, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.info("Please sign in first");
+      navigate("/");
+    }
+  }, [authLoading, user, navigate]);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [clearCacheOpen, setClearCacheOpen] = useState(false);

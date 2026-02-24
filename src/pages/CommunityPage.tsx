@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Sparkles, Plus, X, Send, Clock, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +19,15 @@ interface GlowPost {
 }
 
 const CommunityPage = () => {
-  const { user, subscribed } = useAuth();
+  const { user, subscribed, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.info("Please sign in first");
+      navigate("/");
+    }
+  }, [authLoading, user, navigate]);
   const [posts, setPosts] = useState<GlowPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
