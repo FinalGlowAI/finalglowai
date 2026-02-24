@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -21,10 +21,12 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const location = useLocation();
+  const isAuthPage = location.pathname === "/" || location.pathname === "/reset-password";
 
   return (
     <>
-      {showOnboarding && (
+      {showOnboarding && isAuthPage && (
         <OnboardingPage onComplete={() => setShowOnboarding(false)} />
       )}
       <div className="max-w-lg mx-auto relative">
@@ -39,7 +41,7 @@ const AppContent = () => {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <BottomNav />
+        {!isAuthPage && <BottomNav />}
       </div>
     </>
   );
