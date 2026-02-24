@@ -41,7 +41,7 @@ const ProfilePage = () => {
   };
 
   const handleCheckout = () => {
-    window.open("https://buy.stripe.com/bJe28k15X0qPgaD2R23Nm02", "_blank");
+    window.open("https://buy.stripe.com/fZuaEQeWN0qP8Ib63e3Nm03", "_blank");
   };
 
   const handleManageSubscription = async () => {
@@ -108,7 +108,7 @@ const ProfilePage = () => {
               <Crown size={22} className="text-foreground flex-shrink-0" />
               <div>
                 <p className="font-display text-base font-semibold text-foreground">
-                  Upgrade to Pro — $6.99/mo
+                  Upgrade to Pro — $9.99/mo
                 </p>
                 <p className="font-body text-xs text-foreground/80 mt-0.5">
                   Unlock "See My Look" face scan & AI enhancement
