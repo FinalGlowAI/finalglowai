@@ -47,8 +47,14 @@ const ProfilePage = () => {
     setClearCacheOpen(false);
   };
 
-  const handleCheckout = () => {
-    window.open("https://buy.stripe.com/fZuaEQeWN0qP8Ib63e3Nm03", "_blank");
+  const handleCheckout = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout");
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start checkout");
+    }
   };
 
   const handleManageSubscription = async () => {

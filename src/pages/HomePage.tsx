@@ -4,7 +4,7 @@ import { Sparkles, ChevronRight, Shield, Camera, Palette, Wand2, ArrowDown } fro
 import heroImage from "@/assets/hero-beauty.jpg";
 import heroBrown from "@/assets/hero-beauty-brown.jpg";
 import heroDark from "@/assets/hero-beauty-dark.jpg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
@@ -36,10 +36,19 @@ const steps = [
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, checkSubscription } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
   const howItWorksRef = useRef<HTMLDivElement>(null);
 
+  // Re-check subscription when returning from Stripe checkout
+  useEffect(() => {
+    if (searchParams.get("subscribed") === "true" && user) {
+      checkSubscription();
+      toast.success("Welcome to FinalGlow Pro! 🎉");
+      navigate("/home", { replace: true });
+    }
+  }, [searchParams, user]);
   const handleProtectedNav = (path: string) => {
     if (!user) {
       toast.info("Please sign in first");

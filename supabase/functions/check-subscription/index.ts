@@ -42,17 +42,18 @@ serve(async (req) => {
     }
 
     const customerId = customers.data[0].id;
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
+    // Check for both active AND trialing (3-day trial) subscriptions
+    const [activeSubs, trialingSubs] = await Promise.all([
+      stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 }),
+      stripe.subscriptions.list({ customer: customerId, status: "trialing", limit: 1 }),
+    ]);
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    const allSubs = [...activeSubs.data, ...trialingSubs.data];
+    const hasActiveSub = allSubs.length > 0;
     let subscriptionEnd = null;
 
     if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
+      const subscription = allSubs[0];
       try {
         // Try top-level first, then fall back to item-level (varies by Stripe API version)
         const endTimestamp =
