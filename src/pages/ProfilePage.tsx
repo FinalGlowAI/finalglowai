@@ -18,7 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, subscribed, subscriptionEnd, signOut, loading: authLoading } = useAuth();
+  const { user, subscribed, subscriptionEnd, signOut, checkSubscription, loading: authLoading } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -31,6 +32,13 @@ const ProfilePage = () => {
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
   const [checkoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleRefreshSubscription = async () => {
+    setRefreshing(true);
+    await checkSubscription();
+    setRefreshing(false);
+    toast.success("Subscription status refreshed");
+  };
 
   const handleClearCache = async () => {
     try {
