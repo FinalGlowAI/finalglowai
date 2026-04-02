@@ -4,7 +4,7 @@ import { Sparkles, ChevronRight, Shield, Camera, Palette, Wand2, ArrowDown } fro
 import heroImage from "@/assets/hero-beauty.jpg";
 import heroBrown from "@/assets/hero-beauty-brown.jpg";
 import heroDark from "@/assets/hero-beauty-dark.jpg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
