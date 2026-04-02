@@ -36,10 +36,19 @@ const steps = [
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, checkSubscription } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
   const howItWorksRef = useRef<HTMLDivElement>(null);
 
+  // Re-check subscription when returning from Stripe checkout
+  useEffect(() => {
+    if (searchParams.get("subscribed") === "true" && user) {
+      checkSubscription();
+      toast.success("Welcome to FinalGlow Pro! 🎉");
+      navigate("/home", { replace: true });
+    }
+  }, [searchParams, user]);
   const handleProtectedNav = (path: string) => {
     if (!user) {
       toast.info("Please sign in first");
