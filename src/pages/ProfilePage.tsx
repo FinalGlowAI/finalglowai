@@ -57,7 +57,7 @@ const ProfilePage = () => {
 
   const handleCheckout = () => {
     const email = user?.email ? `?prefilled_email=${encodeURIComponent(user.email)}` : "";
-    window.open(`https://buy.stripe.com/eVq8wIaGx4H5f6z4Za3Nm04${email}`, "_blank");
+    window.open(`https://buy.stripe.com/fZuaEQeWN0qP8Ib63e3Nm03${email}`, "_blank");
   };
 
   const handleManageSubscription = async () => {
