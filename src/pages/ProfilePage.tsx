@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn } from "lucide-react";
+import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn, RefreshCw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
