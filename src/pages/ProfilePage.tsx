@@ -79,6 +79,7 @@ const ProfilePage = () => {
   };
 
   const settingsItems = [
+    ...(user ? [{ icon: RefreshCw, label: "Refresh Subscription", desc: "Check your current plan status", action: handleRefreshSubscription }] : []),
     { icon: Eye, label: "Privacy Policy", desc: "How we protect your data", action: () => setPrivacyOpen(true) },
     { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files", action: () => setClearCacheOpen(true) },
     { icon: Info, label: "About FinalGlow", desc: "Version 1.0.0", action: () => setAboutOpen(true) },
