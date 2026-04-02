@@ -53,7 +53,7 @@ serve(async (req) => {
     let subscriptionEnd = null;
 
     if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
+      const subscription = allSubs[0];
       try {
         // Try top-level first, then fall back to item-level (varies by Stripe API version)
         const endTimestamp =
