@@ -20,8 +20,9 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, subscribed, subscriptionEnd, signOut, checkSubscription, loading: authLoading } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
+  const [couponCode, setCouponCode] = useState("");
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
     if (!authLoading && !user) {
       toast.info("Please sign in first");
       navigate("/");
