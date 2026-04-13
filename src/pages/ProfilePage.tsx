@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn, RefreshCw } from "lucide-react";
+import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn, RefreshCw, Tag } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,9 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, subscribed, subscriptionEnd, signOut, checkSubscription, loading: authLoading } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -30,7 +33,6 @@ const ProfilePage = () => {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
-  const [checkoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   const handleRefreshSubscription = async () => {
@@ -55,9 +57,19 @@ const ProfilePage = () => {
     setClearCacheOpen(false);
   };
 
-  const handleCheckout = () => {
-    const email = user?.email ? `?prefilled_email=${encodeURIComponent(user.email)}` : "";
-    window.open(`https://buy.stripe.com/fZuaEQeWN0qP8Ib63e3Nm03${email}`, "_blank");
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const body: any = {};
+      if (couponCode.trim()) body.couponCode = couponCode.trim();
+      const { data, error } = await supabase.functions.invoke("create-checkout", { body });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start checkout");
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const handleManageSubscription = async () => {
@@ -119,13 +131,13 @@ const ProfilePage = () => {
             animate={{ opacity: 1, y: 0 }}
             onClick={() => handleCheckout()}
             disabled={checkoutLoading}
-            className="mx-5 mb-6 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
+            className="mx-5 mb-2 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
               <Crown size={22} className="text-foreground flex-shrink-0" />
               <div>
                 <p className="font-display text-base font-semibold text-foreground">
-                  Upgrade to Pro — $9.99/mo
+                  {checkoutLoading ? "Loading…" : "Upgrade to Pro — $9.99/mo"}
                 </p>
                 <p className="font-body text-xs text-foreground/80 mt-0.5">
                   Unlock "See My Look" face scan & AI enhancement
@@ -134,6 +146,24 @@ const ProfilePage = () => {
               <ChevronRight size={18} className="text-foreground/60 ml-auto" />
             </div>
           </motion.button>
+          <div className="mx-5 mb-6">
+            <button
+              onClick={() => setShowCoupon(!showCoupon)}
+              className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+            >
+              <Tag size={12} />
+              {showCoupon ? "Hide coupon code" : "Have a coupon code?"}
+            </button>
+            {showCoupon && (
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Enter coupon code"
+                className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
+              />
+            )}
+          </div>
         </>
       ) : (
         <motion.div
