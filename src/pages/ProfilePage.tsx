@@ -131,13 +131,13 @@ const ProfilePage = () => {
             animate={{ opacity: 1, y: 0 }}
             onClick={() => handleCheckout()}
             disabled={checkoutLoading}
-            className="mx-5 mb-6 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
+            className="mx-5 mb-2 rounded-2xl gradient-gold p-5 w-[calc(100%-2.5rem)] text-left disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
               <Crown size={22} className="text-foreground flex-shrink-0" />
               <div>
                 <p className="font-display text-base font-semibold text-foreground">
-                  Upgrade to Pro — $9.99/mo
+                  {checkoutLoading ? "Loading…" : "Upgrade to Pro — $9.99/mo"}
                 </p>
                 <p className="font-body text-xs text-foreground/80 mt-0.5">
                   Unlock "See My Look" face scan & AI enhancement
@@ -146,6 +146,24 @@ const ProfilePage = () => {
               <ChevronRight size={18} className="text-foreground/60 ml-auto" />
             </div>
           </motion.button>
+          <div className="mx-5 mb-6">
+            <button
+              onClick={() => setShowCoupon(!showCoupon)}
+              className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+            >
+              <Tag size={12} />
+              {showCoupon ? "Hide coupon code" : "Have a coupon code?"}
+            </button>
+            {showCoupon && (
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Enter coupon code"
+                className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
+              />
+            )}
+          </div>
         </>
       ) : (
         <motion.div
