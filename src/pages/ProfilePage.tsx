@@ -23,6 +23,8 @@ const ProfilePage = () => {
   const [couponCode, setCouponCode] = useState("");
   const [showCoupon, setShowCoupon] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  useEffect(() => {
     if (!authLoading && !user) {
       toast.info("Please sign in first");
       navigate("/");
@@ -31,7 +33,6 @@ const ProfilePage = () => {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
-  const [checkoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   const handleRefreshSubscription = async () => {
