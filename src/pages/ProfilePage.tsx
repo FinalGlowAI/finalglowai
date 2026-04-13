@@ -57,9 +57,19 @@ const ProfilePage = () => {
     setClearCacheOpen(false);
   };
 
-  const handleCheckout = () => {
-    const email = user?.email ? `?prefilled_email=${encodeURIComponent(user.email)}` : "";
-    window.open(`https://buy.stripe.com/fZuaEQeWN0qP8Ib63e3Nm03${email}`, "_blank");
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const body: any = {};
+      if (couponCode.trim()) body.couponCode = couponCode.trim();
+      const { data, error } = await supabase.functions.invoke("create-checkout", { body });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start checkout");
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const handleManageSubscription = async () => {
