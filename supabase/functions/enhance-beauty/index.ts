@@ -1,10 +1,21 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Fix #4 — version Deno std mise à jour (0.168.0 → 0.224.0)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Fix #3 — type explicite au lieu de `any`
+interface MakeupConfig {
+  lipColor?: string;
+  eyeshadowColor?: string;
+  blushColor?: string;
+  outfitColor?: string;
+  background?: string;
+}
 
 async function pollPrediction(predictionUrl: string, apiToken: string): Promise<string> {
   const maxAttempts = 60;
@@ -39,8 +50,8 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
   throw new Error("Prediction timed out after 120 seconds");
 }
 
-function buildPrompt(makeupConfig: any, style: string, intensity: number = 50): string {
-  // intensity: 0 = barely there, 50 = medium, 100 = full glam
+// Fix #3 — makeupConfig typé correctement
+function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity: number = 50): string {
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
 
   const intensityDesc: Record<string, string> = {
@@ -48,6 +59,7 @@ function buildPrompt(makeupConfig: any, style: string, intensity: number = 50): 
     medium: "balanced, polished makeup with visible but refined application",
     full: "full-coverage, dramatic high-impact makeup with bold pigmentation and statement look",
   };
+
   const styleDesc: Record<string, string> = {
     luxury: "ultra-luxurious Dior haute couture campaign, opulent golden lighting, rich jewel tones, flawless porcelain finish",
     classy: "timeless Vogue editorial, sophisticated neutral palette, elegant studio lighting, refined beauty",
@@ -87,12 +99,47 @@ function buildPrompt(makeupConfig: any, style: string, intensity: number = 50): 
 }
 
 serve(async (req) => {
+  // Gérer le preflight CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ─────────────────────────────────────────────
+  // Fix #1 — Authentification JWT Supabase
+  // Seuls les utilisateurs connectés peuvent appeler cette fonction
+  // ─────────────────────────────────────────────
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: missing Authorization header" }),
+      {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: invalid or expired session" }),
+      {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+  // ─────────────────────────────────────────────
+
   try {
-    const { imageBase64, makeupConfig, style, intensity } = await req.json();
+    const body = await req.json();
+    const { imageBase64, makeupConfig, style, intensity } = body;
 
     if (!imageBase64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
@@ -101,36 +148,50 @@ serve(async (req) => {
       });
     }
 
+    // Fix #2 — Limite de taille de l'image (~5MB max en base64 ≈ 7M caractères)
+    if (imageBase64.length > 7_000_000) {
+      return new Response(
+        JSON.stringify({ error: "Image too large. Maximum size is 5MB." }),
+        {
+          status: 413,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
     if (!REPLICATE_API_TOKEN) {
       throw new Error("REPLICATE_API_TOKEN is not configured");
     }
 
-    const prompt = buildPrompt(makeupConfig, style, intensity);
+    const prompt = buildPrompt(makeupConfig as MakeupConfig | null, style, intensity);
 
-    // Ensure the image is a proper data URI
+    // S'assurer que l'image est un data URI valide
     const imageUri = imageBase64.startsWith("data:")
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`;
 
-    // Create prediction using black-forest-labs/flux-kontext-pro (official model)
-    const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
-        "Content-Type": "application/json",
-        "Prefer": "wait",
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: prompt,
-          input_image: imageUri,
-          aspect_ratio: "match_input_image",
-          output_format: "jpg",
-          safety_tolerance: 2,
+    // Appel à Replicate — flux-kontext-pro
+    const response = await fetch(
+      "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json",
+          Prefer: "wait",
         },
-      }),
-    });
+        body: JSON.stringify({
+          input: {
+            prompt,
+            input_image: imageUri,
+            aspect_ratio: "match_input_image",
+            output_format: "jpg",
+            safety_tolerance: 2,
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -157,9 +218,12 @@ serve(async (req) => {
 
     const prediction = await response.json();
 
-    // With Prefer: wait, the prediction may already be completed
+    // Avec Prefer: wait, la prédiction peut déjà être terminée
     if (prediction.status === "succeeded" && prediction.output) {
-      const imageUrl = typeof prediction.output === "string" ? prediction.output : prediction.output[0];
+      const imageUrl =
+        typeof prediction.output === "string"
+          ? prediction.output
+          : prediction.output[0];
       return new Response(
         JSON.stringify({ enhancedImage: imageUrl }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -174,7 +238,7 @@ serve(async (req) => {
       );
     }
 
-    // Otherwise poll for result
+    // Sinon on poll
     const predictionUrl = prediction.urls?.get;
     if (!predictionUrl) {
       console.error("No prediction URL in response:", JSON.stringify(prediction));
