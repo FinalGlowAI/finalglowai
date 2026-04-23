@@ -4,6 +4,12 @@ import { Camera, Loader2, AlertCircle, Sparkles, Download } from "lucide-react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { renderMakeup } from "@/lib/makeupRenderer";
 
+// Fix #5 — version fixe au lieu de @latest
+const MEDIAPIPE_WASM_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm";
+const MEDIAPIPE_MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
 interface MakeupConfig {
   lipColor: string;
   eyeshadowColor: string;
@@ -23,6 +29,8 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const animFrameRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
+  // Fix #3 — compteur d'erreurs pour éviter les crashes silencieux en boucle
+  const detectionErrorCountRef = useRef<number>(0);
 
   const [status, setStatus] = useState<"loading" | "ready" | "scanning" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -42,8 +50,22 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
       a.href = url;
       a.download = `makeup-look-${Date.now()}.png`;
       a.click();
-      URL.revokeObjectURL(url);
+      // cleanup immédiat après le click
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     }, "image/png");
+  }, []);
+
+  // Fix #4 — onScanComplete stabilisé via ref pour éviter les dépendances cycliques
+  const onScanCompleteRef = useRef(onScanComplete);
+  useEffect(() => {
+    onScanCompleteRef.current = onScanComplete;
+  }, [onScanComplete]);
+
+  const handleScanComplete = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const base64 = canvas.toDataURL("image/png");
+    onScanCompleteRef.current(base64);
   }, []);
 
   // Initialize MediaPipe
@@ -52,14 +74,11 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
 
     const init = async () => {
       try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-        );
+        const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
 
         const landmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+            modelAssetPath: MEDIAPIPE_MODEL_URL,
             delegate: "GPU",
           },
           runningMode: "VIDEO",
@@ -91,34 +110,22 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
     };
   }, []);
 
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-      });
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setStatus("scanning");
-        startDetection();
-      }
-    } catch {
-      setErrorMsg("Camera access denied. Please allow camera permissions.");
-      setStatus("error");
-    }
-  }, []);
-
   const drawMakeup = useCallback(
-    (ctx: CanvasRenderingContext2D, landmarks: { x: number; y: number; z: number }[], w: number, h: number) => {
+    (
+      ctx: CanvasRenderingContext2D,
+      landmarks: { x: number; y: number; z: number }[],
+      w: number,
+      h: number
+    ) => {
       renderMakeup(ctx, landmarks, w, h, makeupConfig);
     },
     [makeupConfig]
   );
 
+  // Fix #3 — détection d'erreurs avec compteur pour éviter les boucles silencieuses
   const startDetection = useCallback(() => {
     let progressCounter = 0;
+    detectionErrorCountRef.current = 0;
 
     const detect = () => {
       const video = videoRef.current;
@@ -145,10 +152,13 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
       try {
         const result = landmarker.detectForVideo(video, performance.now());
 
+        // Reset error counter si la détection réussit
+        detectionErrorCountRef.current = 0;
+
         if (result.faceLandmarks && result.faceLandmarks.length > 0) {
           setFaceDetected(true);
           progressCounter++;
-          setScanProgress(Math.min(progressCounter / 60, 1)); // ~2 seconds at 30fps
+          setScanProgress(Math.min(progressCounter / 60, 1)); // ~2 secondes à 30fps
 
           // Mirror landmarks for selfie view
           const mirroredLandmarks = result.faceLandmarks[0].map((l) => ({
@@ -162,7 +172,15 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
           setFaceDetected(false);
         }
       } catch (err) {
-        // Silently handle detection errors
+        // Fix #3 — compteur d'erreurs : arrêt après 10 erreurs consécutives
+        detectionErrorCountRef.current += 1;
+        console.warn("Detection error #" + detectionErrorCountRef.current, err);
+
+        if (detectionErrorCountRef.current > 10) {
+          setStatus("error");
+          setErrorMsg("Face detection encountered an issue. Please try again.");
+          return; // arrêt de la boucle rAF
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(detect);
@@ -170,6 +188,26 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
 
     detect();
   }, [drawMakeup]);
+
+  // Fix #1 — startCamera dépend de startDetection
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      });
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setStatus("scanning");
+        startDetection();
+      }
+    } catch {
+      setErrorMsg("Camera access denied. Please allow camera permissions.");
+      setStatus("error");
+    }
+  }, [startDetection]); // Fix #1 — startDetection ajouté dans les deps
 
   return (
     <div className="space-y-5">
@@ -190,6 +228,17 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
               <AlertCircle size={24} className="text-destructive" />
             </div>
             <p className="font-body text-sm text-muted-foreground text-center">{errorMsg}</p>
+            {/* Bouton retry pour une meilleure UX en cas d'erreur */}
+            <button
+              onClick={() => {
+                setStatus("loading");
+                setErrorMsg("");
+                detectionErrorCountRef.current = 0;
+              }}
+              className="mt-2 px-4 py-2 rounded-xl bg-muted text-foreground font-body text-sm"
+            >
+              Try again
+            </button>
           </div>
         )}
 
@@ -290,13 +339,7 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          onClick={() => {
-            const canvas = canvasRef.current;
-            if (canvas) {
-              const base64 = canvas.toDataURL("image/png");
-              onScanComplete(base64);
-            }
-          }}
+          onClick={handleScanComplete} // Fix #4 — utilise handleScanComplete stable
           className="w-full py-4 rounded-2xl gradient-gold text-foreground font-display text-base font-medium tracking-wide shadow-lg flex items-center justify-center gap-2"
           whileTap={{ scale: 0.98 }}
         >
