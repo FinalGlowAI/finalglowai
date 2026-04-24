@@ -1,14 +1,13 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Fix #4 — version Deno std mise à jour (0.168.0 → 0.224.0)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Fix #3 — type explicite au lieu de `any`
+// ─── Types ───────────────────────────────────────────────────────────────────
 interface MakeupConfig {
   lipColor?: string;
   eyeshadowColor?: string;
@@ -17,6 +16,7 @@ interface MakeupConfig {
   background?: string;
 }
 
+// ─── Polling Replicate ────────────────────────────────────────────────────────
 async function pollPrediction(predictionUrl: string, apiToken: string): Promise<string> {
   const maxAttempts = 60;
   const pollInterval = 2000;
@@ -50,7 +50,7 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
   throw new Error("Prediction timed out after 120 seconds");
 }
 
-// Fix #3 — makeupConfig typé correctement
+// ─── Prompt Builder ───────────────────────────────────────────────────────────
 function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity: number = 50): string {
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
 
@@ -98,24 +98,19 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
   return prompt;
 }
 
+// ─── Main Handler ─────────────────────────────────────────────────────────────
 serve(async (req) => {
-  // Gérer le preflight CORS
+  // Preflight CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // ─────────────────────────────────────────────
-  // Fix #1 — Authentification JWT Supabase
-  // Seuls les utilisateurs connectés peuvent appeler cette fonction
-  // ─────────────────────────────────────────────
+  // ── 1. Authentification JWT Supabase ────────────────────────────────────────
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return new Response(
       JSON.stringify({ error: "Unauthorized: missing Authorization header" }),
-      {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
@@ -129,36 +124,57 @@ serve(async (req) => {
   if (authError || !user) {
     return new Response(
       JSON.stringify({ error: "Unauthorized: invalid or expired session" }),
-      {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-  // ─────────────────────────────────────────────
+
+  // ── 2. Rate Limiting — max 10 appels par heure par utilisateur ──────────────
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+  const { count, error: countError } = await supabase
+    .from("usage_logs")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("function_name", "enhance-beauty")
+    .gte("created_at", oneHourAgo);
+
+  if (countError) {
+    console.error("Rate limit check error:", countError);
+    // On continue même si la vérification échoue pour ne pas bloquer l'utilisateur
+  } else if ((count ?? 0) >= 10) {
+    return new Response(
+      JSON.stringify({ error: "Rate limit reached. Maximum 10 enhancements per hour." }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Logger l'appel avant de traiter
+  await supabase.from("usage_logs").insert({
+    user_id: user.id,
+    function_name: "enhance-beauty",
+  });
 
   try {
     const body = await req.json();
     const { imageBase64, makeupConfig, style, intensity } = body;
 
+    // ── 3. Validation de l'image ───────────────────────────────────────────────
     if (!imageBase64) {
-      return new Response(JSON.stringify({ error: "No image provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Fix #2 — Limite de taille de l'image (~5MB max en base64 ≈ 7M caractères)
-    if (imageBase64.length > 7_000_000) {
       return new Response(
-        JSON.stringify({ error: "Image too large. Maximum size is 5MB." }),
-        {
-          status: 413,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: "No image provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Limite taille ~5MB max en base64 ≈ 7M caractères
+    if (imageBase64.length > 7_000_000) {
+      return new Response(
+        JSON.stringify({ error: "Image too large. Maximum size is 5MB." }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── 4. Clé Replicate ───────────────────────────────────────────────────────
     const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
     if (!REPLICATE_API_TOKEN) {
       throw new Error("REPLICATE_API_TOKEN is not configured");
@@ -171,7 +187,7 @@ serve(async (req) => {
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`;
 
-    // Appel à Replicate — flux-kontext-pro
+    // ── 5. Appel Replicate ─────────────────────────────────────────────────────
     const response = await fetch(
       "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions",
       {
@@ -253,6 +269,7 @@ serve(async (req) => {
       JSON.stringify({ enhancedImage: imageUrl }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (e) {
     console.error("enhance-beauty error:", e);
     return new Response(
