@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn, RefreshCw, Tag } from "lucide-react";
+import { Shield, Eye, Trash2, Info, ChevronRight, Crown, LogOut, LogIn, RefreshCw, Tag, DownloadCloud } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +33,30 @@ const ProfilePage = () => {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [clearCacheOpen, setClearCacheOpen] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleCheckForUpdates = async () => {
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      toast.success("Reloading with the latest version…");
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("_v", Date.now().toString());
+        window.location.replace(url.toString());
+      }, 600);
+    } catch {
+      toast.error("Failed to check for updates");
+    }
+    setUpdateOpen(false);
+  };
 
   const handleRefreshSubscription = async () => {
     setRefreshing(true);
@@ -87,6 +110,7 @@ const ProfilePage = () => {
 
   const settingsItems = [
     ...(user ? [{ icon: RefreshCw, label: "Refresh Subscription", desc: "Check your current plan status", action: handleRefreshSubscription }] : []),
+    { icon: DownloadCloud, label: "Check for Updates", desc: "Reload the latest app version", action: () => setUpdateOpen(true) },
     { icon: Eye, label: "Privacy Policy", desc: "How we protect your data", action: () => setPrivacyOpen(true) },
     { icon: Trash2, label: "Clear Cache", desc: "Remove temporary files", action: () => setClearCacheOpen(true) },
     { icon: Info, label: "About FinalGlow", desc: "Version 1.0.0", action: () => setAboutOpen(true) },
@@ -305,6 +329,22 @@ const ProfilePage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleClearCache} className="rounded-xl">Clear</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Check for Updates Dialog ── */}
+      <AlertDialog open={updateOpen} onOpenChange={setUpdateOpen}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-lg">Check for Updates</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear the cached app version and reload FinalGlow with the latest updates from the server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCheckForUpdates} className="rounded-xl">Update Now</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
