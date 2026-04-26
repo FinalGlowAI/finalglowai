@@ -159,6 +159,31 @@ const AuthPage = () => {
             </>
           )}
         </p>
+
+        <div className="text-center pt-2">
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                if ("serviceWorker" in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(regs.map((r) => r.unregister()));
+                }
+                if ("caches" in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map((k) => caches.delete(k)));
+                }
+              } finally {
+                const url = new URL(window.location.href);
+                url.searchParams.set("_v", Date.now().toString());
+                window.location.replace(url.toString());
+              }
+            }}
+            className="font-body text-[11px] text-muted-foreground/70 hover:text-foreground underline underline-offset-4"
+          >
+            Having trouble? Reset & reload app
+          </button>
+        </div>
       </motion.div>
     </div>
   );
