@@ -1,75 +1,28 @@
+I found two likely blockers:
 
+1. The published site is serving the new startup cache-cleanup code, but it only clears old PWA caches once and does not force a second reload. If the first page load is still controlled by an old service worker, the new app can still appear blank.
+2. The project currently has a build error in `cleanup-glow-posts` because it still imports `npm:@supabase/supabase-js@2.57.2`. This can block clean deployment/update flows.
 
-# Replace DashScope with Replicate API
+Plan:
 
-## What Changes
+1. Fix the edge function build error
+   - Update `supabase/functions/cleanup-glow-posts/index.ts` to use the same URL-based ESM import pattern already used in `check-subscription`.
+   - Also update the remaining subscription edge functions that still use `npm:@supabase/supabase-js@2.57.2` so the same error does not appear next.
 
-The current `enhance-beauty` edge function uses Alibaba Cloud DashScope (which has an invalid API key). We'll replace it with **Replicate**, a reliable API for running open-source AI models including image-to-image beauty enhancement.
+2. Make the PWA cleanup stronger for deployed users
+   - Update `src/main.tsx` so that when old service workers/caches are found and removed, the app immediately reloads once with a cache-busting URL parameter.
+   - Keep a safe localStorage flag so it cannot enter an infinite reload loop.
+   - Still render the app normally if cleanup fails, if no old cache is found, or after the one-time reload.
 
-## Replicate Model
+3. Add a visible emergency recovery button on the root/auth screen
+   - Add a small “Fix blank screen / update app” action on the first screen users can access.
+   - It will clear service workers, browser caches, local storage/session storage as needed, then reload with a cache-busting parameter.
+   - This is important because users who cannot reach Profile cannot use the existing “Check for Updates” button.
 
-We'll use a suitable image-to-image model on Replicate (e.g. `tencentarc/photomaker-style` or `stability-ai/sdxl` with img2img) that can transform selfies into beauty portraits while preserving face identity. Replicate has a simple REST API with async polling, similar to DashScope.
+4. Improve startup resilience
+   - Wrap the app mount in a lightweight fallback/error guard so if an unexpected startup error happens, users see a simple recovery message/button instead of a pure blank page.
 
-## What You'll Need To Do
-
-1. **Create a Replicate account** at [replicate.com](https://replicate.com)
-2. Go to **Account Settings > API Tokens** and copy your API token
-3. You'll be prompted to enter this token securely in the app
-
-## Steps
-
-### Step 1 -- Store the Replicate API Token
-- Add a new secret `REPLICATE_API_TOKEN` to the project
-- The existing `DASHSCOPE_API_KEY` can be removed afterward
-
-### Step 2 -- Rewrite the `enhance-beauty` Edge Function
-- Remove all DashScope/Alibaba Cloud code
-- Call the Replicate API to create a prediction:
-  - `POST https://api.replicate.com/v1/predictions`
-  - Use an img2img model that preserves face identity (e.g. `bytedance/sdxl-lightning-4step` for speed, or a face-swap/beauty model)
-- Send the user's base64 selfie as a data URI + the beauty transformation prompt
-- Keep the same style descriptions and makeup config prompt logic
-
-### Step 3 -- Handle Async Polling
-- Replicate predictions are async: submit, then poll `GET /v1/predictions/{id}` until status is `succeeded`
-- Polling every 2 seconds, max ~60 seconds timeout
-- Return the output image URL, fetch it, and convert to base64 data URL
-
-### Step 4 -- Error Handling
-- Handle rate limits, auth errors, and failed predictions
-- Keep the same response format (`{ enhancedImage: "data:image/..." }`) so the frontend needs no changes
-
-## Technical Details
-
-```text
-POST https://api.replicate.com/v1/predictions
-Headers:
-  Authorization: Bearer REPLICATE_API_TOKEN
-  Content-Type: application/json
-
-Body:
-  version: "<model_version_hash>"
-  input: {
-    image: "data:image/jpeg;base64,...",
-    prompt: "ultra-realistic beauty portrait..."
-  }
-```
-
-Poll:
-```text
-GET https://api.replicate.com/v1/predictions/{prediction_id}
-Headers:
-  Authorization: Bearer REPLICATE_API_TOKEN
-```
-
-## What Stays the Same
-
-- The frontend code remains completely unchanged
-- Same prompt structure (style descriptions, makeup config)
-- Same response format (`{ enhancedImage: "data:image/..." }`)
-- No visual or UX changes
-
-## Files Modified
-
-- `supabase/functions/enhance-beauty/index.ts` -- rewritten to use Replicate API
-
+5. Verify before handoff
+   - Run the build after changes.
+   - Confirm no `npm:@supabase/supabase-js` imports remain in edge functions.
+   - Confirm the published recovery flow will require clicking **Update** in the publish dialog for frontend changes to go live.
