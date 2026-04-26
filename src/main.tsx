@@ -2,49 +2,32 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
+// PWA cleanup — safe version sans boucle
 const PWA_CLEANUP_KEY = "finalglow-pwa-cleanup-v1";
-
-const cleanupLegacyPwa = async () => {
-  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
-
-  let didCleanup = false;
-
-  if ("serviceWorker" in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    if (registrations.length > 0) {
-      await Promise.all(registrations.map((registration) => registration.unregister()));
-      didCleanup = true;
-    }
-  }
-
-  if ("caches" in window) {
-    const cacheKeys = await caches.keys();
-    if (cacheKeys.length > 0) {
-      await Promise.all(cacheKeys.map((key) => caches.delete(key)));
-      didCleanup = true;
-    }
-  }
-
-  return didCleanup;
-};
 
 const bootApp = async () => {
   try {
-    const alreadyCleaned = window.localStorage.getItem(PWA_CLEANUP_KEY) === "done";
-
+    const alreadyCleaned = localStorage.getItem(PWA_CLEANUP_KEY) === "done";
+    
     if (!alreadyCleaned) {
-      const cleaned = await cleanupLegacyPwa();
-      window.localStorage.setItem(PWA_CLEANUP_KEY, "done");
-
-      if (cleaned) {
-        window.location.replace(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-        return;
+      // Cleanup service workers
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
       }
+      // Cleanup caches
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      // Marque comme fait — PAS de reload pour éviter la boucle
+      localStorage.setItem(PWA_CLEANUP_KEY, "done");
     }
   } catch {
-    // continue boot even if cache cleanup fails
+    // continue même si cleanup échoue
   }
 
+  // Monte TOUJOURS l'app
   createRoot(document.getElementById("root")!).render(<App />);
 };
 
