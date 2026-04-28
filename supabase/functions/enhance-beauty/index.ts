@@ -7,7 +7,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface MakeupConfig {
   lipColor?: string;
   eyeshadowColor?: string;
@@ -16,7 +15,6 @@ interface MakeupConfig {
   background?: string;
 }
 
-// ─── Polling Replicate ────────────────────────────────────────────────────────
 async function pollPrediction(predictionUrl: string, apiToken: string): Promise<string> {
   const maxAttempts = 60;
   const pollInterval = 2000;
@@ -60,53 +58,45 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
     full: "full-coverage pigmented",
   };
 
+  const styleDesc: Record<string, string> = {
+    luxury: "warm golden lighting",
+    classy: "soft studio lighting",
+    elegant: "soft diffused lighting",
+    soft_glam: "soft warm glowing lighting",
+    natural: "soft natural daylight",
+    party: "evening lighting with subtle sparkle",
+    clean_girl: "fresh soft daylight",
+    bold: "soft directional lighting",
+  };
+
+  const selectedLighting = styleDesc[style] || styleDesc.luxury;
   const lipColor = makeupConfig?.lipColor || "rose";
   const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
   const blushColor = makeupConfig?.blushColor || "peach";
+  const outfitColor = makeupConfig?.outfitColor || "";
   const background = makeupConfig?.background || "soft neutral background";
 
-  return `Apply ${intensityDesc[intensityLevel]} makeup to this exact person. 
-Apply ${lipColor} lipstick precisely on the lips only. 
-Apply ${eyeshadowColor} eyeshadow on the eyelids only. 
-Apply ${blushColor} blush softly on the cheeks only. 
-Preserve everything else exactly: face shape, skin tone, skin texture, pores, freckles, 
-eye color and shape, nose, jawline, eyebrows, hair, age, expression, head angle. 
-Do not retouch, slim, smooth or alter the face in any way. 
-Photorealistic result. Same person, only makeup added. Background: ${background}.`;
-}
-  // IDENTITY-FIRST PROMPT — face preservation is stated up front, repeated, and reinforced.
-  let prompt = `Add ONLY makeup to this exact same person. `;
-  prompt += `CRITICAL: keep the EXACT same face, EXACT same identity, EXACT same facial features, `;
-  prompt += `EXACT same face shape, EXACT same bone structure, EXACT same eyes (shape, size, color, spacing), `;
-  prompt += `EXACT same nose (shape, width, length), EXACT same mouth shape, EXACT same jawline, `;
-  prompt += `EXACT same eyebrows shape and thickness, EXACT same skin tone, EXACT same age, `;
-  prompt += `EXACT same ethnicity, EXACT same hair, EXACT same expression, EXACT same head pose and angle. `;
-  prompt += `Do NOT beautify the face. Do NOT slim, reshape, smooth, or alter any facial feature. `;
-  prompt += `Do NOT change skin texture — keep natural pores, freckles, moles, and marks. `;
-  prompt += `Do NOT airbrush. Do NOT make the person look younger or thinner. `;
-  prompt += `The ONLY change allowed: apply makeup on top of the existing face. `;
-  prompt += `Makeup to apply: ${intensityDesc[intensityLevel]} — ${lipColor} lipstick on the lips, `;
-  prompt += `${eyeshadowColor} eyeshadow on the eyelids, ${blushColor} blush on the cheeks. `;
-  prompt += `Lighting: ${selectedLighting}. Background: ${background}. `;
+  let prompt = `Apply ${intensityDesc[intensityLevel]} makeup to this exact person. `;
+  prompt += `Apply ${lipColor} lipstick on the lips, `;
+  prompt += `${eyeshadowColor} eyeshadow on the eyelids, `;
+  prompt += `${blushColor} blush on the cheeks. `;
+  prompt += `Preserve exactly: face shape, skin tone, skin texture, pores, freckles, `;
+  prompt += `eye color and shape, nose, jawline, eyebrows, hair, age, expression, head angle. `;
+  prompt += `Do not retouch or alter the face. Photorealistic. `;
+  prompt += `Lighting: ${selectedLighting}. Background: ${background}.`;
 
   if (outfitColor) {
-    prompt += `Outfit color: ${outfitColor} (only if clothing is visible, do not add new clothing). `;
+    prompt += ` Outfit: ${outfitColor} if visible.`;
   }
-
-  prompt += `Output must be a photorealistic photo of the SAME person, recognizable as the same individual, `;
-  prompt += `simply wearing makeup. Identity preservation is the highest priority.`;
 
   return prompt;
 }
 
-// ─── Main Handler ─────────────────────────────────────────────────────────────
 serve(async (req) => {
-  // Preflight CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // ── 1. Authentification JWT Supabase ────────────────────────────────────────
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return new Response(
@@ -129,9 +119,7 @@ serve(async (req) => {
     );
   }
 
-  // ── 2. Rate Limiting — max 10 appels par heure par utilisateur ──────────────
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
   const { count, error: countError } = await supabase
     .from("usage_logs")
     .select("*", { count: "exact", head: true })
@@ -139,17 +127,13 @@ serve(async (req) => {
     .eq("function_name", "enhance-beauty")
     .gte("created_at", oneHourAgo);
 
-  if (countError) {
-    console.error("Rate limit check error:", countError);
-    // On continue même si la vérification échoue pour ne pas bloquer l'utilisateur
-  } else if ((count ?? 0) >= 10) {
+  if (!countError && (count ?? 0) >= 10) {
     return new Response(
       JSON.stringify({ error: "Rate limit reached. Maximum 10 enhancements per hour." }),
       { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  // Logger l'appel avant de traiter
   await supabase.from("usage_logs").insert({
     user_id: user.id,
     function_name: "enhance-beauty",
@@ -159,14 +143,6 @@ serve(async (req) => {
     const body = await req.json();
     const { imageBase64, makeupConfig, style, intensity } = body;
 
-    console.log("enhance-beauty invoked", {
-      user: user.id,
-      style,
-      intensity,
-      imageLen: imageBase64?.length ?? 0,
-    });
-
-    // ── 3. Validation de l'image ───────────────────────────────────────────────
     if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: "No image provided" }),
@@ -174,16 +150,13 @@ serve(async (req) => {
       );
     }
 
-    // Limite taille ~5MB max en base64 ≈ 7M caractères
     if (imageBase64.length > 7_000_000) {
-      console.warn("Image too large:", imageBase64.length);
       return new Response(
         JSON.stringify({ error: "Image too large. Maximum size is 5MB." }),
         { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ── 4. Clé Replicate ───────────────────────────────────────────────────────
     const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
     if (!REPLICATE_API_TOKEN) {
       throw new Error("REPLICATE_API_TOKEN is not configured");
@@ -191,14 +164,13 @@ serve(async (req) => {
 
     const prompt = buildPrompt(makeupConfig as MakeupConfig | null, style, intensity);
 
-    // S'assurer que l'image est un data URI valide
     const imageUri = imageBase64.startsWith("data:")
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`;
 
-    // ── 5. Appel Replicate ─────────────────────────────────────────────────────
+    // ── Appel Replicate flux-kontext-max (meilleur rendu visage) ──────────────
     const response = await fetch(
-      "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions",
+      "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-max/predictions",
       {
         method: "POST",
         headers: {
@@ -226,15 +198,11 @@ serve(async (req) => {
         );
       }
       if (response.status === 401 || response.status === 403) {
-        const errText = await response.text();
-        console.error("Replicate auth error:", response.status, errText);
         return new Response(
-          JSON.stringify({ error: "Invalid API token. Please check your Replicate API token." }),
+          JSON.stringify({ error: "Invalid API token." }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errText = await response.text();
-      console.error("Replicate submit error:", response.status, errText);
       return new Response(
         JSON.stringify({ error: "Failed to enhance image" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -243,12 +211,10 @@ serve(async (req) => {
 
     const prediction = await response.json();
 
-    // Avec Prefer: wait, la prédiction peut déjà être terminée
     if (prediction.status === "succeeded" && prediction.output) {
-      const imageUrl =
-        typeof prediction.output === "string"
-          ? prediction.output
-          : prediction.output[0];
+      const imageUrl = typeof prediction.output === "string"
+        ? prediction.output
+        : prediction.output[0];
       return new Response(
         JSON.stringify({ enhancedImage: imageUrl }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -256,17 +222,14 @@ serve(async (req) => {
     }
 
     if (prediction.status === "failed" || prediction.status === "canceled") {
-      console.error("Prediction failed:", prediction.error);
       return new Response(
         JSON.stringify({ error: prediction.error || "Image enhancement failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Sinon on poll
     const predictionUrl = prediction.urls?.get;
     if (!predictionUrl) {
-      console.error("No prediction URL in response:", JSON.stringify(prediction));
       return new Response(
         JSON.stringify({ error: "Failed to start image enhancement" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -286,4 +249,5 @@ serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+});
 });
