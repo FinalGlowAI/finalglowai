@@ -64,7 +64,21 @@ const FaceScanStep = ({ makeupConfig, onScanComplete }: FaceScanStepProps) => {
   const handleScanComplete = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const base64 = canvas.toDataURL("image/png");
+
+    // Downscale to max 1024px on the longest side and encode as JPEG
+    // to keep payload well under the edge function's 5MB limit.
+    const MAX_DIM = 1024;
+    const scale = Math.min(1, MAX_DIM / Math.max(canvas.width, canvas.height));
+    const targetW = Math.round(canvas.width * scale);
+    const targetH = Math.round(canvas.height * scale);
+
+    const out = document.createElement("canvas");
+    out.width = targetW;
+    out.height = targetH;
+    const octx = out.getContext("2d");
+    if (!octx) return;
+    octx.drawImage(canvas, 0, 0, targetW, targetH);
+    const base64 = out.toDataURL("image/jpeg", 0.85);
     onScanCompleteRef.current(base64);
   }, []);
 
