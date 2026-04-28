@@ -158,6 +158,13 @@ serve(async (req) => {
     const body = await req.json();
     const { imageBase64, makeupConfig, style, intensity } = body;
 
+    console.log("enhance-beauty invoked", {
+      user: user.id,
+      style,
+      intensity,
+      imageLen: imageBase64?.length ?? 0,
+    });
+
     // ── 3. Validation de l'image ───────────────────────────────────────────────
     if (!imageBase64) {
       return new Response(
@@ -168,6 +175,7 @@ serve(async (req) => {
 
     // Limite taille ~5MB max en base64 ≈ 7M caractères
     if (imageBase64.length > 7_000_000) {
+      console.warn("Image too large:", imageBase64.length);
       return new Response(
         JSON.stringify({ error: "Image too large. Maximum size is 5MB." }),
         { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
