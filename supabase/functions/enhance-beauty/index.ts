@@ -54,33 +54,26 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
 function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity: number = 50): string {
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
 
-  // Makeup-only descriptors — NO face/skin/style transformation language
   const intensityDesc: Record<string, string> = {
-    light: "very sheer, barely-there makeup application",
-    medium: "soft, polished makeup application",
-    full: "fully applied makeup with richer pigment payoff",
+    light: "sheer natural-finish",
+    medium: "soft polished",
+    full: "full-coverage pigmented",
   };
-
-  // Lighting/mood ONLY — removed editorial/campaign references that cause face drift
-  const styleDesc: Record<string, string> = {
-    luxury: "warm soft golden lighting with subtle highlights",
-    classy: "soft neutral studio lighting",
-    elegant: "soft diffused lighting",
-    soft_glam: "soft warm glowing lighting with subtle dewy finish on the makeup only",
-    natural: "soft natural daylight",
-    party: "evening lighting with subtle sparkle on the makeup only",
-    clean_girl: "soft fresh daylight with a subtle dewy finish on the makeup only",
-    bold: "soft directional lighting with slightly richer color on the makeup",
-  };
-
-  const selectedLighting = styleDesc[style] || styleDesc.luxury;
 
   const lipColor = makeupConfig?.lipColor || "rose";
   const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
   const blushColor = makeupConfig?.blushColor || "peach";
-  const outfitColor = makeupConfig?.outfitColor || "";
   const background = makeupConfig?.background || "soft neutral background";
 
+  return `Apply ${intensityDesc[intensityLevel]} makeup to this exact person. 
+Apply ${lipColor} lipstick precisely on the lips only. 
+Apply ${eyeshadowColor} eyeshadow on the eyelids only. 
+Apply ${blushColor} blush softly on the cheeks only. 
+Preserve everything else exactly: face shape, skin tone, skin texture, pores, freckles, 
+eye color and shape, nose, jawline, eyebrows, hair, age, expression, head angle. 
+Do not retouch, slim, smooth or alter the face in any way. 
+Photorealistic result. Same person, only makeup added. Background: ${background}.`;
+}
   // IDENTITY-FIRST PROMPT — face preservation is stated up front, repeated, and reinforced.
   let prompt = `Add ONLY makeup to this exact same person. `;
   prompt += `CRITICAL: keep the EXACT same face, EXACT same identity, EXACT same facial features, `;
