@@ -54,46 +54,54 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
 function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity: number = 50): string {
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
 
+  // Makeup-only descriptors — NO face/skin/style transformation language
   const intensityDesc: Record<string, string> = {
-    light: "very subtle, barely-there makeup with a natural no-makeup look, sheer coverage",
-    medium: "balanced, polished makeup with visible but refined application",
-    full: "full-coverage, dramatic high-impact makeup with bold pigmentation and statement look",
+    light: "very sheer, barely-there makeup application",
+    medium: "soft, polished makeup application",
+    full: "fully applied makeup with richer pigment payoff",
   };
 
+  // Lighting/mood ONLY — removed editorial/campaign references that cause face drift
   const styleDesc: Record<string, string> = {
-    luxury: "ultra-luxurious Dior haute couture campaign, opulent golden lighting, rich jewel tones, flawless porcelain finish",
-    classy: "timeless Vogue editorial, sophisticated neutral palette, elegant studio lighting, refined beauty",
-    elegant: "Harper's Bazaar cover shoot, graceful and polished, soft diffused lighting, understated glamour",
-    soft_glam: "Glossier campaign aesthetic, dewy radiant skin, effortless beauty, soft warm glow",
-    natural: "barely-there fresh-faced beauty, dewy minimal makeup, clean luminous skin, natural light",
-    party: "Met Gala red carpet glam, bold dramatic makeup, sparkling highlights, dazzling evening look",
-    clean_girl: "Hailey Bieber clean girl aesthetic, glass skin, slicked back hair, minimal dewy perfection",
-    bold: "high-fashion editorial with statement-making intensity, dramatic contour, bold color payoff",
+    luxury: "warm soft golden lighting with subtle highlights",
+    classy: "soft neutral studio lighting",
+    elegant: "soft diffused lighting",
+    soft_glam: "soft warm glowing lighting with subtle dewy finish on the makeup only",
+    natural: "soft natural daylight",
+    party: "evening lighting with subtle sparkle on the makeup only",
+    clean_girl: "soft fresh daylight with a subtle dewy finish on the makeup only",
+    bold: "soft directional lighting with slightly richer color on the makeup",
   };
 
-  const selectedStyle = styleDesc[style] || styleDesc.luxury;
+  const selectedLighting = styleDesc[style] || styleDesc.luxury;
 
   const lipColor = makeupConfig?.lipColor || "rose";
   const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
   const blushColor = makeupConfig?.blushColor || "peach";
   const outfitColor = makeupConfig?.outfitColor || "";
-  const background = makeupConfig?.background || "soft bokeh studio";
+  const background = makeupConfig?.background || "soft neutral background";
 
-  let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
-  prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
-  prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
-  prompt += `Makeup: ${lipColor} lips, ${eyeshadowColor} eyeshadow, ${blushColor} blush. `;
-  prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
-  prompt += `Professional color grading with warm luxurious tones. `;
-  prompt += `Cinematic depth of field with ${background} background. `;
+  // IDENTITY-FIRST PROMPT — face preservation is stated up front, repeated, and reinforced.
+  let prompt = `Add ONLY makeup to this exact same person. `;
+  prompt += `CRITICAL: keep the EXACT same face, EXACT same identity, EXACT same facial features, `;
+  prompt += `EXACT same face shape, EXACT same bone structure, EXACT same eyes (shape, size, color, spacing), `;
+  prompt += `EXACT same nose (shape, width, length), EXACT same mouth shape, EXACT same jawline, `;
+  prompt += `EXACT same eyebrows shape and thickness, EXACT same skin tone, EXACT same age, `;
+  prompt += `EXACT same ethnicity, EXACT same hair, EXACT same expression, EXACT same head pose and angle. `;
+  prompt += `Do NOT beautify the face. Do NOT slim, reshape, smooth, or alter any facial feature. `;
+  prompt += `Do NOT change skin texture — keep natural pores, freckles, moles, and marks. `;
+  prompt += `Do NOT airbrush. Do NOT make the person look younger or thinner. `;
+  prompt += `The ONLY change allowed: apply makeup on top of the existing face. `;
+  prompt += `Makeup to apply: ${intensityDesc[intensityLevel]} — ${lipColor} lipstick on the lips, `;
+  prompt += `${eyeshadowColor} eyeshadow on the eyelids, ${blushColor} blush on the cheeks. `;
+  prompt += `Lighting: ${selectedLighting}. Background: ${background}. `;
 
   if (outfitColor) {
-    prompt += `Wearing ${outfitColor} outfit. `;
+    prompt += `Outfit color: ${outfitColor} (only if clothing is visible, do not add new clothing). `;
   }
 
-  prompt += `Preserve exact face identity, features, bone structure, and expression. `;
-  prompt += `Result should look like a Sephora or Dior campaign photo. `;
-  prompt += `Photorealistic quality, NOT cartoon, NOT painting, NOT AI-looking.`;
+  prompt += `Output must be a photorealistic photo of the SAME person, recognizable as the same individual, `;
+  prompt += `simply wearing makeup. Identity preservation is the highest priority.`;
 
   return prompt;
 }
