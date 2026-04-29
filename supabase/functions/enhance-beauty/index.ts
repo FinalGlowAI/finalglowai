@@ -181,6 +181,7 @@ serve(async (req) => {
             safety_tolerance: 2,
             guidance: 3.5,
             steps: 28,
+            prompt_upsampling: true,
           },
         }),
       }
