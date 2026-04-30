@@ -170,6 +170,7 @@ const confidenceBoosters = [
 const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing, selectedPalette }: MakeupResultStepProps) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
+  const [boosterIndex, setBoosterIndex] = useState(() => Math.floor(Math.random() * confidenceBoosters.length));
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
   const [sharingToGlow, setSharingToGlow] = useState(false);
@@ -182,6 +183,19 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
     : null;
   const displayImage = showOriginal ? capturedImage : (enhancedImage || capturedImage);
+  const showBooster = !isEnhancing && !!enhancedImage;
+
+  useEffect(() => {
+    if (!showBooster) return;
+    const interval = setInterval(() => {
+      setBoosterIndex((prev) => {
+        let next = Math.floor(Math.random() * confidenceBoosters.length);
+        if (next === prev) next = (next + 1) % confidenceBoosters.length;
+        return next;
+      });
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [showBooster]);
 
   useEffect(() => {
     if (!isEnhancing) return;
