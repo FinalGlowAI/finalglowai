@@ -154,6 +154,19 @@ const beautyMessages = [
   "Finalizing your glow…",
 ];
 
+const confidenceBoosters = [
+  "You're absolutely gorgeous today ✨",
+  "Glowing like sunshine 🌞",
+  "Pure radiance — own it 💫",
+  "Effortlessly stunning 💎",
+  "Your glow is unmatched 🌟",
+  "Beauty in every detail 🤍",
+  "A masterpiece, truly 🎨",
+  "Confidence looks divine on you 👑",
+  "Soft, luminous, magnetic ✨",
+  "You're the moment 💖",
+];
+
 const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing, selectedPalette }: MakeupResultStepProps) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
