@@ -16,6 +16,12 @@ export interface MakeupPalette {
   lipColor: string;       // hsl(...)
   eyeshadowColor: string; // hsl(...)
   blushColor: string;     // hsl(...)
+  /** 0–100 — how well this palette matches outfit + skin */
+  confidence: number;
+  /** Short label: "Excellent" | "Strong" | "Good" | "Fair" */
+  confidenceLabel: string;
+  /** One-line reason explaining the score */
+  confidenceReason: string;
 }
 
 interface GenerateInput {
