@@ -48,6 +48,37 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
   throw new Error("Prediction timed out after 120 seconds");
 }
 
+// ─── HSL → friendly shade name ────────────────────────────────────────────
+function parseHSL(hsl: string): [number, number, number] {
+  const m = hsl.match(/hsl\((\d+),?\s*(\d+)%,?\s*(\d+)%\)/);
+  return m ? [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])] : [0, 0, 50];
+}
+
+function shadeName(input: string): string {
+  if (!input || !input.startsWith("hsl")) return input || "neutral";
+  const [h, s, l] = parseHSL(input);
+  if (s < 18) {
+    if (l > 72) return "soft beige";
+    if (l > 55) return "warm taupe";
+    if (l > 35) return "smoky cocoa";
+    return "deep espresso";
+  }
+  const family =
+    h < 12 || h >= 345 ? "rose" :
+    h < 25 ? "coral" :
+    h < 45 ? "honey gold" :
+    h < 70 ? "champagne" :
+    h < 100 ? "olive" :
+    h < 160 ? "emerald" :
+    h < 200 ? "teal" :
+    h < 250 ? "sapphire" :
+    h < 290 ? "violet" :
+    h < 330 ? "plum" :
+    "berry";
+  const depth = l > 65 ? "soft" : l > 50 ? "warm" : l > 35 ? "rich" : "deep";
+  return `${depth} ${family}`;
+}
+
 // ─── Prompt Builder ───────────────────────────────────────────────────────────
 function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity: number = 50): string {
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
