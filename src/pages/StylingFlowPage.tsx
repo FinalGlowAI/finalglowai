@@ -895,6 +895,26 @@ const StylingFlowPage = () => {
             </div>
           </motion.div>
         )}
+
+        {/* ═══ PALETTE STEP ═══ */}
+        {currentStep === "palette" && (
+          <motion.div
+            key="palette"
+            custom={direction}
+            variants={pageVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={pageTransition}
+          >
+            <PaletteStep
+              palettes={palettes}
+              selectedPaletteId={selectedPaletteId}
+              onSelect={setSelectedPaletteId}
+              skinTone={skinColor}
+            />
+          </motion.div>
+        )}
         {/* ═══ FACE SCAN STEP ═══ */}
         {currentStep === "scan" && (
           <motion.div
