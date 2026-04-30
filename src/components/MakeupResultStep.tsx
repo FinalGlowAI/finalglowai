@@ -267,16 +267,51 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
             </div>
           </div>
         </div>
-        <div className="bg-card p-4 flex gap-2 flex-wrap">
-          {style && (
-            <span className="font-body text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-muted text-muted-foreground">
-              {style.replace("_", " ")}
-            </span>
-          )}
-          {brandDisplayName && (
-            <span className="font-body text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-muted text-muted-foreground">
-              {brandDisplayName}
-            </span>
+        <div className="bg-card p-4 space-y-3">
+          <div className="flex gap-2 flex-wrap">
+            {style && (
+              <span className="font-body text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-muted text-muted-foreground">
+                {style.replace("_", " ")}
+              </span>
+            )}
+            {brandDisplayName && (
+              <span className="font-body text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-muted text-muted-foreground">
+                {brandDisplayName}
+              </span>
+            )}
+            {selectedPalette && (
+              <span className="font-body text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-muted text-muted-foreground">
+                {selectedPalette.name}
+              </span>
+            )}
+          </div>
+
+          {/* Confidence meter — mirrors the Palette step */}
+          {selectedPalette && (
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Gauge size={12} className={confidenceTone(selectedPalette.confidence).text} />
+                  <span className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Match confidence
+                  </span>
+                </div>
+                <span className={`font-display text-xs font-semibold ${confidenceTone(selectedPalette.confidence).text}`}>
+                  {selectedPalette.confidence}% · {selectedPalette.confidenceLabel}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${selectedPalette.confidence}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className={`h-full ${confidenceTone(selectedPalette.confidence).bar}`}
+                />
+              </div>
+              <p className="font-body text-[10px] text-muted-foreground mt-1.5 italic">
+                {selectedPalette.confidenceReason}
+              </p>
+            </div>
           )}
         </div>
       </motion.div>
