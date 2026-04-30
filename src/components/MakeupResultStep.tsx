@@ -154,7 +154,7 @@ const beautyMessages = [
   "Finalizing your glow…",
 ];
 
-const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing }: MakeupResultStepProps) => {
+const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing, selectedPalette }: MakeupResultStepProps) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
