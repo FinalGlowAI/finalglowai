@@ -16,6 +16,12 @@ export interface MakeupPalette {
   lipColor: string;       // hsl(...)
   eyeshadowColor: string; // hsl(...)
   blushColor: string;     // hsl(...)
+  /** 0–100 — how well this palette matches outfit + skin */
+  confidence: number;
+  /** Short label: "Excellent" | "Strong" | "Good" | "Fair" */
+  confidenceLabel: string;
+  /** One-line reason explaining the score */
+  confidenceReason: string;
 }
 
 interface GenerateInput {
@@ -148,30 +154,82 @@ export function generatePalettes({ outfitColors, vibe, skinTone }: GenerateInput
   const s1e: HSL = adjustForSkin([adapted.eye[0], clampSat(adapted.eye[1] + 15), clampLit(adapted.eye[2] - 8)], skinL);
   const s1b: HSL = adjustForSkin([adapted.blush[0], clampSat(adapted.blush[1] + 10), adapted.blush[2]], skinL);
 
+  // ── Confidence scoring ────────────────────────────────────────────────
+  const hasOutfit = adapted.dominantHue >= 0;
+
+  // Skin compatibility: penalize lips that are too close in lightness to skin
+  const skinFit = (lip: HSL): number => {
+    const contrast = Math.abs(lip[2] - skinL);          // 0–100
+    const ideal = Math.min(contrast / 35, 1) * 100;     // peak around 35pt diff
+    return Math.round(ideal);
+  };
+
+  // Outfit harmony: hue distance between lip and outfit dominant
+  const hueDist = (a: number, b: number): number => {
+    const d = Math.abs(a - b) % 360;
+    return d > 180 ? 360 - d : d;
+  };
+
+  const outfitFit = (lip: HSL, mode: "harmonious" | "complementary" | "neutral" | "statement"): number => {
+    if (!hasOutfit) return mode === "neutral" ? 80 : 70;
+    const dist = hueDist(lip[0], adapted.dominantHue);
+    switch (mode) {
+      case "harmonious":   return Math.round(100 - Math.min(dist, 60) * 0.8);   // best when close
+      case "complementary":return Math.round(100 - Math.abs(dist - 180) * 0.6); // best near 180°
+      case "neutral":      return 78;                                            // always reasonably safe
+      case "statement":    return Math.round(85 - Math.min(dist, 90) * 0.2);
+    }
+  };
+
+  const labelFor = (score: number): string =>
+    score >= 88 ? "Excellent" : score >= 75 ? "Strong" : score >= 60 ? "Good" : "Fair";
+
+  const score = (lip: HSL, mode: "harmonious" | "complementary" | "neutral" | "statement") => {
+    const o = outfitFit(lip, mode);
+    const s = skinFit(lip);
+    return Math.round(o * 0.6 + s * 0.4);
+  };
+
+  const reasonFor = (mode: string, hasOutfit: boolean): string => {
+    if (mode === "harmonious")    return hasOutfit ? "Echoes your outfit's dominant hue" : "Balanced everyday harmony";
+    if (mode === "complementary") return hasOutfit ? "Contrasts your outfit for visual lift" : "Cool/warm contrast accent";
+    if (mode === "neutral")       return "Universally flattering on your skin tone";
+    return hasOutfit ? "Deepened to match your skin's depth" : "Bold pigment for impact";
+  };
+
+  const sH = score(h1, "harmonious");
+  const sC = score(c1, "complementary");
+  const sN = score(n1, "neutral");
+  const sS = score(s1, "statement");
+
   return [
     {
       id: "harmonious",
       name: paletteName(h1, h1e, "harmonious"),
       description: "Echoes your outfit — effortless harmony",
       lipColor: toHSL(h1), eyeshadowColor: toHSL(h1e), blushColor: toHSL(h1b),
+      confidence: sH, confidenceLabel: labelFor(sH), confidenceReason: reasonFor("harmonious", hasOutfit),
     },
     {
       id: "complementary",
       name: paletteName(c1, c1e, "complementary"),
       description: "A contrasting accent that lifts the look",
       lipColor: toHSL(c1), eyeshadowColor: toHSL(c1e), blushColor: toHSL(c1b),
+      confidence: sC, confidenceLabel: labelFor(sC), confidenceReason: reasonFor("complementary", hasOutfit),
     },
     {
       id: "neutral",
       name: paletteName(n1, n1e, "neutral"),
       description: "Quiet luxury — wearable any day",
       lipColor: toHSL(n1), eyeshadowColor: toHSL(n1e), blushColor: toHSL(n1b),
+      confidence: sN, confidenceLabel: labelFor(sN), confidenceReason: reasonFor("neutral", hasOutfit),
     },
     {
       id: "statement",
       name: paletteName(s1, s1e, "statement"),
       description: "Deeper and bolder — for impact",
       lipColor: toHSL(s1), eyeshadowColor: toHSL(s1e), blushColor: toHSL(s1b),
+      confidence: sS, confidenceLabel: labelFor(sS), confidenceReason: reasonFor("statement", hasOutfit),
     },
   ];
 }

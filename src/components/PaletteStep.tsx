@@ -1,6 +1,14 @@
 import { motion } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Gauge } from "lucide-react";
 import type { MakeupPalette } from "@/lib/makeupPalettes";
+
+// Tailwind classes for confidence colors
+const confidenceTone = (score: number) => {
+  if (score >= 88) return { dot: "bg-emerald-500", text: "text-emerald-500", bar: "bg-emerald-500" };
+  if (score >= 75) return { dot: "bg-gold", text: "text-gold", bar: "bg-gold" };
+  if (score >= 60) return { dot: "bg-amber-500", text: "text-amber-500", bar: "bg-amber-500" };
+  return { dot: "bg-muted-foreground", text: "text-muted-foreground", bar: "bg-muted-foreground" };
+};
 
 interface PaletteStepProps {
   palettes: MakeupPalette[];
@@ -91,9 +99,36 @@ const PaletteStep = ({ palettes, selectedPaletteId, onSelect, skinTone }: Palett
       >
         <MiniFacePreview palette={selected} skinTone={skinTone} />
         {selected ? (
-          <div className="text-center">
+          <div className="text-center w-full">
             <p className="font-display text-base font-semibold text-foreground">{selected.name}</p>
             <p className="font-body text-xs text-muted-foreground mt-0.5">{selected.description}</p>
+
+            {/* Confidence meter */}
+            <div className="mt-3 px-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Gauge size={11} className={confidenceTone(selected.confidence).text} />
+                  <span className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Match confidence
+                  </span>
+                </div>
+                <span className={`font-display text-xs font-semibold ${confidenceTone(selected.confidence).text}`}>
+                  {selected.confidence}% · {selected.confidenceLabel}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  key={selected.id}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${selected.confidence}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className={`h-full ${confidenceTone(selected.confidence).bar}`}
+                />
+              </div>
+              <p className="font-body text-[10px] text-muted-foreground mt-1.5 italic">
+                {selected.confidenceReason}
+              </p>
+            </div>
           </div>
         ) : (
           <p className="font-body text-xs text-muted-foreground">Select a palette below</p>
@@ -104,6 +139,7 @@ const PaletteStep = ({ palettes, selectedPaletteId, onSelect, skinTone }: Palett
       <div className="grid grid-cols-2 gap-3">
         {palettes.map((p, i) => {
           const isSelected = selectedPaletteId === p.id;
+          const tone = confidenceTone(p.confidence);
           return (
             <motion.button
               key={p.id}
@@ -133,15 +169,26 @@ const PaletteStep = ({ palettes, selectedPaletteId, onSelect, skinTone }: Palett
               <p className="font-body text-[10px] text-muted-foreground mt-1 leading-snug">
                 {p.description}
               </p>
-              <div className="flex gap-1 mt-2">
-                {["Lip", "Eye", "Blush"].map((l) => (
-                  <span
-                    key={l}
-                    className="font-body text-[8px] uppercase tracking-wider text-muted-foreground"
-                  >
-                    {l}
+
+              {/* Confidence chip + bar */}
+              <div className="mt-2.5">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+                    <span className="font-body text-[9px] uppercase tracking-wider text-muted-foreground">
+                      Match
+                    </span>
+                  </div>
+                  <span className={`font-display text-[10px] font-semibold ${tone.text}`}>
+                    {p.confidence}%
                   </span>
-                ))}
+                </div>
+                <div className="h-1 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full ${tone.bar}`}
+                    style={{ width: `${p.confidence}%` }}
+                  />
+                </div>
               </div>
             </motion.button>
           );
