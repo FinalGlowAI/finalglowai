@@ -218,6 +218,7 @@ const StylingFlowPage = () => {
   const [autoDetect, setAutoDetect] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [makeupIntensity, setMakeupIntensity] = useState(50); // 0-100: light → full
+  const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
