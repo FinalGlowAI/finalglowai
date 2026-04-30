@@ -273,6 +273,34 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
           )}
         </motion.div>
       )}
+
+      {/* ─── Confidence Booster ─── */}
+      {showBooster && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="relative rounded-2xl overflow-hidden border border-gold/30 gradient-gold p-[1px]"
+        >
+          <div className="rounded-2xl bg-card/60 backdrop-blur-sm px-5 py-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center flex-shrink-0">
+              <Sparkles size={18} className="text-foreground" />
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={boosterIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.45 }}
+                className="font-display text-base sm:text-lg font-medium text-foreground italic leading-snug"
+              >
+                {confidenceBoosters[boosterIndex]}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
       {/* Result Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
