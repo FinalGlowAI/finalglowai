@@ -253,6 +253,8 @@ const StylingFlowPage = () => {
         return selectedSkin !== null || autoDetect;
       case "brand":
         return selectedBrand !== null;
+      case "palette":
+        return selectedPaletteId !== null;
       case "scan":
       case "result":
         return false; // These steps have their own CTAs
