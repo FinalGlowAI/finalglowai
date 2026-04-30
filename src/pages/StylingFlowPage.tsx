@@ -957,6 +957,7 @@ const StylingFlowPage = () => {
               capturedImage={capturedImage}
               enhancedImage={enhancedImage}
               isEnhancing={isEnhancing}
+              selectedPalette={palettes.find((p) => p.id === selectedPaletteId) || palettes[0] || null}
             />
           </motion.div>
         )}
