@@ -1,6 +1,14 @@
 import { motion } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Gauge } from "lucide-react";
 import type { MakeupPalette } from "@/lib/makeupPalettes";
+
+// Tailwind classes for confidence colors
+const confidenceTone = (score: number) => {
+  if (score >= 88) return { dot: "bg-emerald-500", text: "text-emerald-500", bar: "bg-emerald-500" };
+  if (score >= 75) return { dot: "bg-gold", text: "text-gold", bar: "bg-gold" };
+  if (score >= 60) return { dot: "bg-amber-500", text: "text-amber-500", bar: "bg-amber-500" };
+  return { dot: "bg-muted-foreground", text: "text-muted-foreground", bar: "bg-muted-foreground" };
+};
 
 interface PaletteStepProps {
   palettes: MakeupPalette[];
