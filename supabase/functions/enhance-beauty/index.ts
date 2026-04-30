@@ -48,6 +48,37 @@ async function pollPrediction(predictionUrl: string, apiToken: string): Promise<
   throw new Error("Prediction timed out after 120 seconds");
 }
 
+// ─── HSL → friendly shade name ────────────────────────────────────────────
+function parseHSL(hsl: string): [number, number, number] {
+  const m = hsl.match(/hsl\((\d+),?\s*(\d+)%,?\s*(\d+)%\)/);
+  return m ? [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])] : [0, 0, 50];
+}
+
+function shadeName(input: string): string {
+  if (!input || !input.startsWith("hsl")) return input || "neutral";
+  const [h, s, l] = parseHSL(input);
+  if (s < 18) {
+    if (l > 72) return "soft beige";
+    if (l > 55) return "warm taupe";
+    if (l > 35) return "smoky cocoa";
+    return "deep espresso";
+  }
+  const family =
+    h < 12 || h >= 345 ? "rose" :
+    h < 25 ? "coral" :
+    h < 45 ? "honey gold" :
+    h < 70 ? "champagne" :
+    h < 100 ? "olive" :
+    h < 160 ? "emerald" :
+    h < 200 ? "teal" :
+    h < 250 ? "sapphire" :
+    h < 290 ? "violet" :
+    h < 330 ? "plum" :
+    "berry";
+  const depth = l > 65 ? "soft" : l > 50 ? "warm" : l > 35 ? "rich" : "deep";
+  return `${depth} ${family}`;
+}
+
 // ─── Prompt Builder ───────────────────────────────────────────────────────────
 function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity: number = 50): string {
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
@@ -71,16 +102,17 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
 
   const selectedStyle = styleDesc[style] || styleDesc.luxury;
 
-  const lipColor = makeupConfig?.lipColor || "rose";
-  const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
-  const blushColor = makeupConfig?.blushColor || "peach";
+  const lipShade = shadeName(makeupConfig?.lipColor || "rose");
+  const eyeShade = shadeName(makeupConfig?.eyeshadowColor || "honey gold");
+  const blushShade = shadeName(makeupConfig?.blushColor || "soft coral");
   const outfitColor = makeupConfig?.outfitColor || "";
   const background = makeupConfig?.background || "soft bokeh studio";
 
   let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
   prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
   prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
-  prompt += `Makeup: ${lipColor} lips, ${eyeshadowColor} eyeshadow, ${blushColor} blush. `;
+  prompt += `Use these EXACT makeup shades and no others: ${lipShade} lipstick, ${eyeShade} eyeshadow, ${blushShade} blush. `;
+  prompt += `Lip color must read as ${lipShade}; eyeshadow must read as ${eyeShade}; blush must read as ${blushShade}. `;
   prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
   prompt += `Professional color grading with warm luxurious tones. `;
   prompt += `Cinematic depth of field with ${background} background. `;
