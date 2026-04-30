@@ -275,7 +275,7 @@ const StylingFlowPage = () => {
       return;
     }
     setDirection(1);
-    setCurrentStep("scan");
+    setCurrentStep("palette");
   };
 
   
@@ -289,6 +289,7 @@ const StylingFlowPage = () => {
     setAutoDetect(false);
     setSelectedBrand(null);
     setMakeupIntensity(50);
+    setSelectedPaletteId(null);
     setCapturedImage(null);
     setEnhancedImage(null);
   };
