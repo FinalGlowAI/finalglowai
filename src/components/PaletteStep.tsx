@@ -139,6 +139,7 @@ const PaletteStep = ({ palettes, selectedPaletteId, onSelect, skinTone }: Palett
       <div className="grid grid-cols-2 gap-3">
         {palettes.map((p, i) => {
           const isSelected = selectedPaletteId === p.id;
+          const tone = confidenceTone(p.confidence);
           return (
             <motion.button
               key={p.id}
@@ -168,15 +169,26 @@ const PaletteStep = ({ palettes, selectedPaletteId, onSelect, skinTone }: Palett
               <p className="font-body text-[10px] text-muted-foreground mt-1 leading-snug">
                 {p.description}
               </p>
-              <div className="flex gap-1 mt-2">
-                {["Lip", "Eye", "Blush"].map((l) => (
-                  <span
-                    key={l}
-                    className="font-body text-[8px] uppercase tracking-wider text-muted-foreground"
-                  >
-                    {l}
+
+              {/* Confidence chip + bar */}
+              <div className="mt-2.5">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+                    <span className="font-body text-[9px] uppercase tracking-wider text-muted-foreground">
+                      Match
+                    </span>
+                  </div>
+                  <span className={`font-display text-[10px] font-semibold ${tone.text}`}>
+                    {p.confidence}%
                   </span>
-                ))}
+                </div>
+                <div className="h-1 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full ${tone.bar}`}
+                    style={{ width: `${p.confidence}%` }}
+                  />
+                </div>
               </div>
             </motion.button>
           );
