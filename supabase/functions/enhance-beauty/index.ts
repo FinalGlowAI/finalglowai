@@ -102,16 +102,17 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
 
   const selectedStyle = styleDesc[style] || styleDesc.luxury;
 
-  const lipColor = makeupConfig?.lipColor || "rose";
-  const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
-  const blushColor = makeupConfig?.blushColor || "peach";
+  const lipShade = shadeName(makeupConfig?.lipColor || "rose");
+  const eyeShade = shadeName(makeupConfig?.eyeshadowColor || "honey gold");
+  const blushShade = shadeName(makeupConfig?.blushColor || "soft coral");
   const outfitColor = makeupConfig?.outfitColor || "";
   const background = makeupConfig?.background || "soft bokeh studio";
 
   let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
   prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
   prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
-  prompt += `Makeup: ${lipColor} lips, ${eyeshadowColor} eyeshadow, ${blushColor} blush. `;
+  prompt += `Use these EXACT makeup shades and no others: ${lipShade} lipstick, ${eyeShade} eyeshadow, ${blushShade} blush. `;
+  prompt += `Lip color must read as ${lipShade}; eyeshadow must read as ${eyeShade}; blush must read as ${blushShade}. `;
   prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
   prompt += `Professional color grading with warm luxurious tones. `;
   prompt += `Cinematic depth of field with ${background} background. `;
