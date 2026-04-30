@@ -99,9 +99,36 @@ const PaletteStep = ({ palettes, selectedPaletteId, onSelect, skinTone }: Palett
       >
         <MiniFacePreview palette={selected} skinTone={skinTone} />
         {selected ? (
-          <div className="text-center">
+          <div className="text-center w-full">
             <p className="font-display text-base font-semibold text-foreground">{selected.name}</p>
             <p className="font-body text-xs text-muted-foreground mt-0.5">{selected.description}</p>
+
+            {/* Confidence meter */}
+            <div className="mt-3 px-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Gauge size={11} className={confidenceTone(selected.confidence).text} />
+                  <span className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Match confidence
+                  </span>
+                </div>
+                <span className={`font-display text-xs font-semibold ${confidenceTone(selected.confidence).text}`}>
+                  {selected.confidence}% · {selected.confidenceLabel}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  key={selected.id}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${selected.confidence}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className={`h-full ${confidenceTone(selected.confidence).bar}`}
+                />
+              </div>
+              <p className="font-body text-[10px] text-muted-foreground mt-1.5 italic">
+                {selected.confidenceReason}
+              </p>
+            </div>
           </div>
         ) : (
           <p className="font-body text-xs text-muted-foreground">Select a palette below</p>
