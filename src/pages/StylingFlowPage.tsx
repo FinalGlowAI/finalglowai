@@ -966,7 +966,7 @@ const StylingFlowPage = () => {
       {currentStep !== "scan" && currentStep !== "result" && (
         <div className="fixed bottom-20 left-0 right-0 px-5 z-40 max-w-lg mx-auto">
           <motion.button
-            onClick={currentStep === "brand" ? handleFinish : goNext}
+            onClick={currentStep === "palette" ? handleFinish : goNext}
             disabled={!canProceed()}
             className={`w-full py-4 rounded-2xl font-display text-base font-medium tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
               canProceed()
@@ -975,7 +975,7 @@ const StylingFlowPage = () => {
             }`}
             whileTap={canProceed() ? { scale: 0.98 } : {}}
           >
-            {currentStep === "brand" ? (
+            {currentStep === "palette" ? (
               <>
                 {(!user || !subscribed) ? <Lock size={18} /> : <Camera size={18} />}
                 {(!user || !subscribed) ? "Unlock Face Scan — Pro" : "Start Face Scan"}
