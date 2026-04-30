@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck, Download, Send } from "lucide-react";
+import { Sparkles, ChevronDown, RotateCcw, Share2, ExternalLink, ShieldCheck, Download, Send, Gauge } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import type { MakeupPalette } from "@/lib/makeupPalettes";
 
 interface MakeupResult {
   area: string;
@@ -22,7 +23,15 @@ interface MakeupResultStepProps {
   capturedImage?: string | null;
   enhancedImage?: string | null;
   isEnhancing?: boolean;
+  selectedPalette?: MakeupPalette | null;
 }
+
+const confidenceTone = (score: number) => {
+  if (score >= 88) return { text: "text-emerald-500", bar: "bg-emerald-500" };
+  if (score >= 75) return { text: "text-gold", bar: "bg-gold" };
+  if (score >= 60) return { text: "text-amber-500", bar: "bg-amber-500" };
+  return { text: "text-muted-foreground", bar: "bg-muted-foreground" };
+};
 
 // ─── Brand-specific product recommendations ─────────────────────────
 interface BrandProduct {
