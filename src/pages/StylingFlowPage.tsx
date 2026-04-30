@@ -275,7 +275,7 @@ const StylingFlowPage = () => {
       return;
     }
     setDirection(1);
-    setCurrentStep("palette");
+    setCurrentStep("scan");
   };
 
   
