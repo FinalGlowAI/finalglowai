@@ -53,35 +53,45 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
   const intensityLevel = intensity <= 30 ? "light" : intensity <= 65 ? "medium" : "full";
 
   const intensityDesc: Record<string, string> = {
-    light: "barely-there sheer",
-    medium: "soft natural-finish",
-    full: "polished full-coverage",
+    light: "very subtle, barely-there makeup with a natural no-makeup look, sheer coverage",
+    medium: "balanced, polished makeup with visible but refined application",
+    full: "full-coverage, dramatic high-impact makeup with bold pigmentation and statement look",
   };
 
-  const lipColor = makeupConfig?.lipColor || "nude rose";
-  const eyeshadowColor = makeupConfig?.eyeshadowColor || "warm brown";
-  const blushColor = makeupConfig?.blushColor || "soft peach";
-  const outfitColor = makeupConfig?.outfitColor || "";
-  const background = makeupConfig?.background || "dark moody studio background";
+  const styleDesc: Record<string, string> = {
+    luxury: "ultra-luxurious Dior haute couture campaign, opulent golden lighting, rich jewel tones, flawless porcelain finish",
+    classy: "timeless Vogue editorial, sophisticated neutral palette, elegant studio lighting, refined beauty",
+    elegant: "Harper's Bazaar cover shoot, graceful and polished, soft diffused lighting, understated glamour",
+    soft_glam: "Glossier campaign aesthetic, dewy radiant skin, effortless beauty, soft warm glow",
+    natural: "barely-there fresh-faced beauty, dewy minimal makeup, clean luminous skin, natural light",
+    party: "Met Gala red carpet glam, bold dramatic makeup, sparkling highlights, dazzling evening look",
+    clean_girl: "Hailey Bieber clean girl aesthetic, glass skin, slicked back hair, minimal dewy perfection",
+    bold: "high-fashion editorial with statement-making intensity, dramatic contour, bold color payoff",
+  };
 
-  let prompt = `Professional beauty portrait of this exact same person. `;
-  prompt += `Apply ${intensityDesc[intensityLevel]} makeup: `;
-  prompt += `${lipColor} lip color with natural finish, `;
-  prompt += `${eyeshadowColor} eyeshadow blended softly on eyelids, `;
-  prompt += `${blushColor} blush lightly dusted on cheeks, `;
-  prompt += `subtle golden highlighter on cheekbones and nose bridge. `;
-  prompt += `Skin looks natural, healthy, and luminous — not airbrushed. `;
-  prompt += `Keep all natural skin texture, pores, and unique features intact. `;
-  prompt += `CRITICAL: same face, same identity, same skin tone, same facial structure, `;
-  prompt += `same eyes, same nose, same lips shape, same jawline, same eyebrows, `;
-  prompt += `same hair, same age, same expression, same head angle. `;
-  prompt += `Warm golden studio lighting with soft shadows. `;
-  prompt += `Background: ${background}. `;
-  prompt += `Photorealistic professional beauty photo. No filters. No beautification.`;
+  const selectedStyle = styleDesc[style] || styleDesc.luxury;
+
+  const lipColor = makeupConfig?.lipColor || "rose";
+  const eyeshadowColor = makeupConfig?.eyeshadowColor || "gold";
+  const blushColor = makeupConfig?.blushColor || "peach";
+  const outfitColor = makeupConfig?.outfitColor || "";
+  const background = makeupConfig?.background || "soft bokeh studio";
+
+  let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
+  prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
+  prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
+  prompt += `Makeup: ${lipColor} lips, ${eyeshadowColor} eyeshadow, ${blushColor} blush. `;
+  prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
+  prompt += `Professional color grading with warm luxurious tones. `;
+  prompt += `Cinematic depth of field with ${background} background. `;
 
   if (outfitColor) {
-    prompt += ` Clothing: ${outfitColor} if visible.`;
+    prompt += `Wearing ${outfitColor} outfit. `;
   }
+
+  prompt += `Preserve the exact same face, identity, skin tone, facial features, bone structure, eye shape, nose, lip shape, jawline, eyebrows, hair, and age. `;
+  prompt += `Result should look like a Sephora or Dior campaign photo. `;
+  prompt += `Photorealistic quality, NOT cartoon, NOT painting, NOT AI-looking.`;
 
   return prompt;
 }
@@ -164,7 +174,7 @@ serve(async (req) => {
       : `data:image/jpeg;base64,${imageBase64}`;
 
     const response = await fetch(
-      "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-max/predictions",
+      "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions",
       {
         method: "POST",
         headers: {
@@ -179,9 +189,6 @@ serve(async (req) => {
             aspect_ratio: "match_input_image",
             output_format: "jpg",
             safety_tolerance: 2,
-            guidance: 3.5,
-            steps: 28,
-            prompt_upsampling: true,
           },
         }),
       }
