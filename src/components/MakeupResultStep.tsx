@@ -154,9 +154,23 @@ const beautyMessages = [
   "Finalizing your glow…",
 ];
 
+const confidenceBoosters = [
+  "You're absolutely gorgeous today ✨",
+  "Glowing like sunshine 🌞",
+  "Pure radiance — own it 💫",
+  "Effortlessly stunning 💎",
+  "Your glow is unmatched 🌟",
+  "Beauty in every detail 🤍",
+  "A masterpiece, truly 🎨",
+  "Confidence looks divine on you 👑",
+  "Soft, luminous, magnetic ✨",
+  "You're the moment 💖",
+];
+
 const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, enhancedImage, isEnhancing, selectedPalette }: MakeupResultStepProps) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
+  const [boosterIndex, setBoosterIndex] = useState(() => Math.floor(Math.random() * confidenceBoosters.length));
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
   const [sharingToGlow, setSharingToGlow] = useState(false);
@@ -169,6 +183,19 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
     ? { dior: "Dior", fenty: "Fenty Beauty", sephora: "Sephora", rare: "Rare Beauty", mac: "MAC" }[brand] || brand
     : null;
   const displayImage = showOriginal ? capturedImage : (enhancedImage || capturedImage);
+  const showBooster = !isEnhancing && !!enhancedImage;
+
+  useEffect(() => {
+    if (!showBooster) return;
+    const interval = setInterval(() => {
+      setBoosterIndex((prev) => {
+        let next = Math.floor(Math.random() * confidenceBoosters.length);
+        if (next === prev) next = (next + 1) % confidenceBoosters.length;
+        return next;
+      });
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [showBooster]);
 
   useEffect(() => {
     if (!isEnhancing) return;
@@ -244,6 +271,34 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
               </button>
             </div>
           )}
+        </motion.div>
+      )}
+
+      {/* ─── Confidence Booster ─── */}
+      {showBooster && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="relative rounded-2xl overflow-hidden border border-gold/30 gradient-gold p-[1px]"
+        >
+          <div className="rounded-2xl bg-card/60 backdrop-blur-sm px-5 py-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center flex-shrink-0">
+              <Sparkles size={18} className="text-foreground" />
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={boosterIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.45 }}
+                className="font-display text-base sm:text-lg font-medium text-foreground italic leading-snug"
+              >
+                {confidenceBoosters[boosterIndex]}
+              </motion.p>
+            </AnimatePresence>
+          </div>
         </motion.div>
       )}
       {/* Result Header */}
