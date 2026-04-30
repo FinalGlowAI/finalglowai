@@ -10,17 +10,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FaceScanStep from "@/components/FaceScanStep";
 import MakeupResultStep from "@/components/MakeupResultStep";
+import PaletteStep from "@/components/PaletteStep";
+import { generatePalettes } from "@/lib/makeupPalettes";
 import { useAuth } from "@/contexts/AuthContext";
 import { Slider } from "@/components/ui/slider";
 
 // ─── STEP TYPES ───
-type FlowStep = "outfit" | "style" | "skin" | "brand" | "scan" | "result";
+type FlowStep = "outfit" | "style" | "skin" | "brand" | "palette" | "scan" | "result";
 
 const stepLabels: { key: FlowStep; label: string }[] = [
   { key: "outfit", label: "Outfit" },
   { key: "style", label: "Style" },
   { key: "skin", label: "Skin" },
   { key: "brand", label: "Brand" },
+  { key: "palette", label: "Palette" },
   { key: "scan", label: "Face Scan" },
   { key: "result", label: "Results" },
 ];
