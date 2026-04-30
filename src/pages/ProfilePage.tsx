@@ -81,13 +81,26 @@ const ProfilePage = () => {
   };
 
   const handleCheckout = async () => {
+    if (!user) {
+      toast.error("Please sign in to upgrade your plan");
+      navigate("/");
+      return;
+    }
     setCheckoutLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast.error("Your session expired. Please sign in again.");
+        navigate("/");
+        return;
+      }
       const body: any = {};
       if (couponCode.trim()) body.couponCode = couponCode.trim();
       const { data, error } = await supabase.functions.invoke("create-checkout", { body });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (data?.url) window.open(data.url, "_blank");
+      else throw new Error("Could not start checkout. Please try again.");
     } catch (err: any) {
       toast.error(err.message || "Failed to start checkout");
     } finally {
