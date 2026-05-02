@@ -70,7 +70,7 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: "price_1T1rhr21KLfTwdbbnYpeJdgG", quantity: 1 }],
+      line_items: [{ price: "price_1T490O21KLfTwdbbeMiRkcuZ", quantity: 1 }],
       mode: "subscription",
       subscription_data: { trial_period_days: 3 },
       success_url: `${origin}/home?subscribed=true`,
