@@ -268,13 +268,24 @@ const ProfilePage = () => {
               <p className="font-body text-xs text-foreground/80 mt-0.5">
                 Active{subscriptionEnd ? ` · Renews ${new Date(subscriptionEnd).toLocaleDateString()}` : ""}
               </p>
-              <button
-                onClick={handleManageSubscription}
-                disabled={portalLoading}
-                className="font-body text-xs text-foreground underline mt-2 disabled:opacity-60"
-              >
-                {portalLoading ? "Loading…" : "Manage Subscription"}
-              </button>
+              {onAndroid ? (
+                <a
+                  href="https://play.google.com/store/account/subscriptions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-body text-xs text-foreground underline mt-2 inline-block"
+                >
+                  Manage on Google Play
+                </a>
+              ) : (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={portalLoading}
+                  className="font-body text-xs text-foreground underline mt-2 disabled:opacity-60"
+                >
+                  {portalLoading ? "Loading…" : "Manage Subscription"}
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
