@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  initRevenueCat,
+  logOutRevenueCat,
+  isNativeAndroid,
+  hasProEntitlement,
+} from "@/lib/revenuecat";
+import { Purchases } from "@revenuecat/purchases-capacitor";
 
 interface AuthContextType {
   user: User | null;
@@ -33,6 +40,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkSubscription = async () => {
     try {
+      // 1. On Android, check RevenueCat first (Play Billing)
+      if (isNativeAndroid()) {
+        try {
+          const { customerInfo } = await Purchases.getCustomerInfo();
+          if (hasProEntitlement(customerInfo)) {
+            const ent = customerInfo.entitlements.active["pro"];
+            setSubscribed(true);
+            setSubscriptionEnd(ent?.expirationDate ?? null);
+            return;
+          }
+        } catch (e) {
+          console.warn("[AuthContext] RevenueCat check failed", e);
+        }
+      }
+
+      // 2. Fallback / web / iOS: Stripe via edge function
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
       setSubscribed(data?.subscribed ?? false);
@@ -44,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    await logOutRevenueCat();
     await supabase.auth.signOut();
     setSubscribed(false);
     setSubscriptionEnd(null);
@@ -68,6 +92,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check subscription when user changes
   useEffect(() => {
     if (user) {
+      // Initialize RevenueCat with the Supabase user id as appUserID (Android only)
+      initRevenueCat(user.id).catch((e) =>
+        console.warn("[AuthContext] RevenueCat init failed", e)
+      );
       checkSubscription();
       const interval = setInterval(checkSubscription, 60000);
 
