@@ -221,24 +221,37 @@ const ProfilePage = () => {
               <ChevronRight size={18} className="text-foreground/60 ml-auto" />
             </div>
           </motion.button>
-          <div className="mx-5 mb-6">
-            <button
-              onClick={() => setShowCoupon(!showCoupon)}
-              className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-            >
-              <Tag size={12} />
-              {showCoupon ? "Hide coupon code" : "Have a coupon code?"}
-            </button>
-            {showCoupon && (
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Enter coupon code"
-                className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
-              />
-            )}
-          </div>
+          {!onAndroid && (
+            <div className="mx-5 mb-6">
+              <button
+                onClick={() => setShowCoupon(!showCoupon)}
+                className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+              >
+                <Tag size={12} />
+                {showCoupon ? "Hide coupon code" : "Have a coupon code?"}
+              </button>
+              {showCoupon && (
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Enter coupon code"
+                  className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
+                />
+              )}
+            </div>
+          )}
+          {onAndroid && (
+            <div className="mx-5 mb-6">
+              <button
+                onClick={handleRestorePurchases}
+                disabled={restoreLoading}
+                className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
+              >
+                {restoreLoading ? "Restoring…" : "Restore previous purchases"}
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <motion.div
