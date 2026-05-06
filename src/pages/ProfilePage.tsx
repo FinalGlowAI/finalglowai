@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isNativeAndroid, purchasePro, restorePurchases, hasProEntitlement } from "@/lib/revenuecat";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ const ProfilePage = () => {
   const [couponCode, setCouponCode] = useState("");
   const [showCoupon, setShowCoupon] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const onAndroid = isNativeAndroid();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -88,6 +91,19 @@ const ProfilePage = () => {
     }
     setCheckoutLoading(true);
     try {
+      // Android → Google Play Billing via RevenueCat
+      if (onAndroid) {
+        const info = await purchasePro();
+        if (hasProEntitlement(info)) {
+          toast.success("Welcome to FinalGlow Pro!");
+          await checkSubscription();
+        } else {
+          toast.info("Purchase not completed");
+        }
+        return;
+      }
+
+      // Web / iOS → Stripe Checkout
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         toast.error("Your session expired. Please sign in again.");
@@ -102,9 +118,31 @@ const ProfilePage = () => {
       if (data?.url) window.open(data.url, "_blank");
       else throw new Error("Could not start checkout. Please try again.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to start checkout");
+      // RevenueCat user-cancelled errors should not show as errors
+      if (err?.code === "1" || /cancel/i.test(err?.message ?? "")) {
+        toast.info("Purchase cancelled");
+      } else {
+        toast.error(err.message || "Failed to start checkout");
+      }
     } finally {
       setCheckoutLoading(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    setRestoreLoading(true);
+    try {
+      const info = await restorePurchases();
+      if (hasProEntitlement(info)) {
+        toast.success("Purchases restored!");
+        await checkSubscription();
+      } else {
+        toast.info("No active purchases found");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to restore purchases");
+    } finally {
+      setRestoreLoading(false);
     }
   };
 
