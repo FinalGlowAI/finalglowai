@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isNativeAndroid, purchasePro, restorePurchases, hasProEntitlement } from "@/lib/revenuecat";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ const ProfilePage = () => {
   const [couponCode, setCouponCode] = useState("");
   const [showCoupon, setShowCoupon] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const onAndroid = isNativeAndroid();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -88,6 +91,19 @@ const ProfilePage = () => {
     }
     setCheckoutLoading(true);
     try {
+      // Android → Google Play Billing via RevenueCat
+      if (onAndroid) {
+        const info = await purchasePro();
+        if (hasProEntitlement(info)) {
+          toast.success("Welcome to FinalGlow Pro!");
+          await checkSubscription();
+        } else {
+          toast.info("Purchase not completed");
+        }
+        return;
+      }
+
+      // Web / iOS → Stripe Checkout
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         toast.error("Your session expired. Please sign in again.");
@@ -102,9 +118,31 @@ const ProfilePage = () => {
       if (data?.url) window.open(data.url, "_blank");
       else throw new Error("Could not start checkout. Please try again.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to start checkout");
+      // RevenueCat user-cancelled errors should not show as errors
+      if (err?.code === "1" || /cancel/i.test(err?.message ?? "")) {
+        toast.info("Purchase cancelled");
+      } else {
+        toast.error(err.message || "Failed to start checkout");
+      }
     } finally {
       setCheckoutLoading(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    setRestoreLoading(true);
+    try {
+      const info = await restorePurchases();
+      if (hasProEntitlement(info)) {
+        toast.success("Purchases restored!");
+        await checkSubscription();
+      } else {
+        toast.info("No active purchases found");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to restore purchases");
+    } finally {
+      setRestoreLoading(false);
     }
   };
 
@@ -183,24 +221,37 @@ const ProfilePage = () => {
               <ChevronRight size={18} className="text-foreground/60 ml-auto" />
             </div>
           </motion.button>
-          <div className="mx-5 mb-6">
-            <button
-              onClick={() => setShowCoupon(!showCoupon)}
-              className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-            >
-              <Tag size={12} />
-              {showCoupon ? "Hide coupon code" : "Have a coupon code?"}
-            </button>
-            {showCoupon && (
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Enter coupon code"
-                className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
-              />
-            )}
-          </div>
+          {!onAndroid && (
+            <div className="mx-5 mb-6">
+              <button
+                onClick={() => setShowCoupon(!showCoupon)}
+                className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+              >
+                <Tag size={12} />
+                {showCoupon ? "Hide coupon code" : "Have a coupon code?"}
+              </button>
+              {showCoupon && (
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Enter coupon code"
+                  className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
+                />
+              )}
+            </div>
+          )}
+          {onAndroid && (
+            <div className="mx-5 mb-6">
+              <button
+                onClick={handleRestorePurchases}
+                disabled={restoreLoading}
+                className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
+              >
+                {restoreLoading ? "Restoring…" : "Restore previous purchases"}
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <motion.div
@@ -217,13 +268,24 @@ const ProfilePage = () => {
               <p className="font-body text-xs text-foreground/80 mt-0.5">
                 Active{subscriptionEnd ? ` · Renews ${new Date(subscriptionEnd).toLocaleDateString()}` : ""}
               </p>
-              <button
-                onClick={handleManageSubscription}
-                disabled={portalLoading}
-                className="font-body text-xs text-foreground underline mt-2 disabled:opacity-60"
-              >
-                {portalLoading ? "Loading…" : "Manage Subscription"}
-              </button>
+              {onAndroid ? (
+                <a
+                  href="https://play.google.com/store/account/subscriptions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-body text-xs text-foreground underline mt-2 inline-block"
+                >
+                  Manage on Google Play
+                </a>
+              ) : (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={portalLoading}
+                  className="font-body text-xs text-foreground underline mt-2 disabled:opacity-60"
+                >
+                  {portalLoading ? "Loading…" : "Manage Subscription"}
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

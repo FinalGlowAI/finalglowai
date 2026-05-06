@@ -70,6 +70,45 @@ export type Database = {
         }
         Relationships: []
       }
+      play_subscriptions: {
+        Row: {
+          active: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          platform: string
+          product_id: string | null
+          raw_event: Json | null
+          revenuecat_app_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          platform?: string
+          product_id?: string | null
+          raw_event?: Json | null
+          revenuecat_app_user_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          platform?: string
+          product_id?: string | null
+          raw_event?: Json | null
+          revenuecat_app_user_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           created_at: string | null
