@@ -17,60 +17,20 @@ interface PaletteStepProps {
   skinTone: string;
 }
 
-// ─── Mini face preview – CSS-only oval with tinted lip / eye / cheek zones
-const MiniFacePreview = ({ palette, skinTone }: { palette: MakeupPalette | null; skinTone: string }) => (
-  <div className="relative w-32 h-40 mx-auto">
-    {/* Face oval */}
+// ─── Emoji face preview – a friendly face with a soft palette-tinted glow
+const MiniFacePreview = ({ palette }: { palette: MakeupPalette | null; skinTone: string }) => (
+  <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
     <div
-      className="absolute inset-0 rounded-[50%] border border-border shadow-inner"
-      style={{ backgroundColor: skinTone }}
+      className="absolute inset-0 rounded-full blur-2xl opacity-40"
+      style={{
+        background: palette
+          ? `radial-gradient(circle, ${palette.blushColor} 0%, transparent 70%)`
+          : "transparent",
+      }}
     />
-    {/* Eyeshadow – two arcs */}
-    {palette && (
-      <>
-        <div
-          className="absolute rounded-full opacity-60 blur-[2px]"
-          style={{
-            top: "32%", left: "22%", width: "20%", height: "8%",
-            backgroundColor: palette.eyeshadowColor,
-          }}
-        />
-        <div
-          className="absolute rounded-full opacity-60 blur-[2px]"
-          style={{
-            top: "32%", right: "22%", width: "20%", height: "8%",
-            backgroundColor: palette.eyeshadowColor,
-          }}
-        />
-        {/* Pupils for character */}
-        <div className="absolute rounded-full bg-foreground/70" style={{ top: "36%", left: "28%", width: "5%", height: "4%" }} />
-        <div className="absolute rounded-full bg-foreground/70" style={{ top: "36%", right: "28%", width: "5%", height: "4%" }} />
-        {/* Blush – two soft circles */}
-        <div
-          className="absolute rounded-full opacity-50 blur-[3px]"
-          style={{
-            top: "55%", left: "12%", width: "22%", height: "16%",
-            backgroundColor: palette.blushColor,
-          }}
-        />
-        <div
-          className="absolute rounded-full opacity-50 blur-[3px]"
-          style={{
-            top: "55%", right: "12%", width: "22%", height: "16%",
-            backgroundColor: palette.blushColor,
-          }}
-        />
-        {/* Lips */}
-        <div
-          className="absolute rounded-full"
-          style={{
-            top: "75%", left: "32%", width: "36%", height: "7%",
-            backgroundColor: palette.lipColor,
-            boxShadow: `0 0 6px ${palette.lipColor}`,
-          }}
-        />
-      </>
-    )}
+    <span className="relative text-7xl leading-none select-none" role="img" aria-label="makeup face">
+      {palette ? "💄" : "😊"}
+    </span>
   </div>
 );
 
