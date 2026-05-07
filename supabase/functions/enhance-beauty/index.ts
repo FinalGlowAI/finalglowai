@@ -108,22 +108,22 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
   const outfitColor = makeupConfig?.outfitColor || "";
   const background = makeupConfig?.background || "soft bokeh studio";
 
-  // Apply VISIBLE, professionally-applied makeup on the SAME person.
-  let prompt = `Apply professional, clearly visible makeup to the EXACT SAME PERSON in the input photograph — like a high-end beauty editorial close-up. The makeup must be obvious and beautifully blended, NOT invisible. `;
-  prompt += `\n\nIDENTITY LOCK (critical): Keep the SAME face — same bone structure, same skin tone and undertone, same ethnicity, same age, same nose, same eye shape and eye color, same eyebrow shape, same lip shape, same jawline, same hairline, same hair. Do NOT slim, beautify, whiten, or replace the face. The person must be instantly recognizable. Keep the original head pose, gaze, and expression. `;
-  prompt += `\n\nMAKEUP TO APPLY (must be clearly visible, like a magazine beauty shot):\n`;
-  prompt += `• Eyeshadow: rich, well-blended ${eyeShade} pigment across the lids, deepening into the crease and softly winged out — visibly colored, not a wash. Add defined lashes and subtle eyeliner along the lash line.\n`;
-  prompt += `• Lips: ${lipShade} lipstick with even, opaque coverage, clean edges, a soft natural sheen.\n`;
-  prompt += `• Cheeks: ${blushShade} blush diffused on the apples of the cheeks for a healthy flush.\n`;
-  prompt += `• Skin: even, luminous complexion with the SAME tone as the original — natural pores preserved, only lightly smoothed (never plastic, never lightened).\n`;
-  prompt += `• Brows: groomed, naturally defined, same shape as original.\n`;
-  prompt += `• Highlight: a delicate glow on cheekbones, brow bone, and nose bridge.\n`;
-  prompt += `\nStyle direction: ${selectedStyle}. Intensity: ${intensityDesc[intensityLevel]}. `;
-  prompt += `Lighting: soft, flattering studio beauty light with a ${background} background. `;
+  let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
+  prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
+  prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
+  prompt += `Use these EXACT makeup shades and no others: ${lipShade} lipstick, ${eyeShade} eyeshadow, ${blushShade} blush. `;
+  prompt += `Lip color must read as ${lipShade}; eyeshadow must read as ${eyeShade}; blush must read as ${blushShade}. `;
+  prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
+  prompt += `Professional color grading with warm luxurious tones. `;
+  prompt += `Cinematic depth of field with ${background} background. `;
+
   if (outfitColor) {
-    prompt += `Outfit color: ${outfitColor}. `;
+    prompt += `Wearing ${outfitColor} outfit. `;
   }
-  prompt += `\n\nOutput: ultra-photorealistic DSLR beauty close-up, sharp focus on the eyes, the SAME person now wearing the described makeup — visibly and beautifully applied. NOT a cartoon, NOT a painting, NOT a no-makeup look.`;
+
+  prompt += `Preserve the exact same face, identity, skin tone, facial features, bone structure, eye shape, nose, lip shape, jawline, eyebrows, hair, and age. `;
+  prompt += `Result should look like a Sephora or Dior campaign photo. `;
+  prompt += `Photorealistic quality, NOT cartoon, NOT painting, NOT AI-looking.`;
 
   return prompt;
 }
