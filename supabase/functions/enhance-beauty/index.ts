@@ -108,22 +108,19 @@ function buildPrompt(makeupConfig: MakeupConfig | null, style: string, intensity
   const outfitColor = makeupConfig?.outfitColor || "";
   const background = makeupConfig?.background || "soft bokeh studio";
 
-  let prompt = `Professional ultra-realistic beauty portrait photo. ${selectedStyle}. `;
-  prompt += `Makeup intensity: ${intensityDesc[intensityLevel]}. `;
-  prompt += `Flawless airbrushed skin with realistic pore texture preserved. `;
-  prompt += `Use these EXACT makeup shades and no others: ${lipShade} lipstick, ${eyeShade} eyeshadow, ${blushShade} blush. `;
+  // IDENTITY PRESERVATION FIRST — this is the single most important instruction.
+  let prompt = `Add ONLY makeup to the EXACT SAME PERSON in the input photo. This is the same individual — do NOT generate a new face, do NOT beautify the bone structure, do NOT slim the face, do NOT change ethnicity, do NOT change age, do NOT alter the nose, eye shape, eye color, eyebrow shape, lip shape, jawline, chin, hairline, hair color, hair texture, freckles, moles, birthmarks, scars, or any unique facial feature. The output must be instantly recognizable as the same person by friends and family. `;
+  prompt += `Treat this as a makeup overlay on the original photograph, NOT a portrait regeneration. Keep the original face geometry pixel-accurate. `;
+  prompt += `Keep the original skin tone and undertone exactly — do NOT lighten, whiten, or tan the skin. Preserve natural skin texture, pores, and small imperfections; only smooth slightly, never airbrush into plastic. `;
+  prompt += `Keep the original head pose, gaze direction, and facial expression identical to the input. `;
+  prompt += `\n\nMakeup direction: ${selectedStyle}. Intensity: ${intensityDesc[intensityLevel]}. `;
+  prompt += `Apply these EXACT shades and no others: ${lipShade} lipstick, ${eyeShade} eyeshadow, ${blushShade} blush. `;
   prompt += `Lip color must read as ${lipShade}; eyeshadow must read as ${eyeShade}; blush must read as ${blushShade}. `;
-  prompt += `Soft professional studio lighting with gentle highlights on cheekbones and nose bridge. `;
-  prompt += `Professional color grading with warm luxurious tones. `;
-  prompt += `Cinematic depth of field with ${background} background. `;
-
+  prompt += `Lighting and background should stay close to the original; if refined, use soft natural studio light with a ${background} background. `;
   if (outfitColor) {
-    prompt += `Wearing ${outfitColor} outfit. `;
+    prompt += `Outfit color: ${outfitColor}. `;
   }
-
-  prompt += `Preserve the exact same face, identity, skin tone, facial features, bone structure, eye shape, nose, lip shape, jawline, eyebrows, hair, and age. `;
-  prompt += `Result should look like a Sephora or Dior campaign photo. `;
-  prompt += `Photorealistic quality, NOT cartoon, NOT painting, NOT AI-looking.`;
+  prompt += `Photorealistic DSLR quality. NOT a cartoon, NOT a painting, NOT a different person, NOT an idealized model — the SAME person, just wearing makeup.`;
 
   return prompt;
 }
