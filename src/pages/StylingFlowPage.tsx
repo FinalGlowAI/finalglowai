@@ -913,6 +913,19 @@ const StylingFlowPage = () => {
               onSelect={setSelectedPaletteId}
               skinTone={skinColor}
             />
+            <div className="px-5 pt-4 pb-2 flex justify-center">
+              <button
+                onClick={() => {
+                  if (!selectedPaletteId && palettes.length > 0) {
+                    setSelectedPaletteId(palettes[0].id);
+                  }
+                  handleFinish();
+                }}
+                className="font-body text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+              >
+                Skip this step
+              </button>
+            </div>
           </motion.div>
         )}
         {/* ═══ FACE SCAN STEP ═══ */}
