@@ -8,7 +8,7 @@ import {
 
 // RevenueCat Android SDK key — this is a PUBLIC key (safe in client code).
 // Replace with your real key from app.revenuecat.com → Project → API Keys.
-export const REVENUECAT_ANDROID_API_KEY = "goog_YOUR_REVENUECAT_ANDROID_KEY";
+export const REVENUECAT_ANDROID_API_KEY = "goog_BegXAXcFVmAVgXljWjdkIFaKTaK";
 
 // Entitlement identifier configured in RevenueCat (e.g. "pro").
 export const ENTITLEMENT_ID = "pro";
