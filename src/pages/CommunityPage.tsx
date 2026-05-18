@@ -81,7 +81,7 @@ const CommunityPage = () => {
 
           return {
             ...post,
-            glow_count: count || 0,
+            glow_count: (count || 0) + ((post as any).bonus_glows || 0),
             has_glowed: !!userGlow,
             user_email: post.user_id === user!.id ? user!.email : undefined,
           };
@@ -381,7 +381,7 @@ const CommunityPage = () => {
                           : "text-muted-foreground"
                       }`}
                     >
-                      {post.glow_count}
+                      {post.glow_count.toLocaleString()}
                     </span>
                   </button>
                   <span className="font-body text-xs text-muted-foreground">
