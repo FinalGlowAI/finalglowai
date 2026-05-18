@@ -51,6 +51,9 @@ const Footer = () => {
               <DialogDescription className="font-body text-xs text-muted-foreground">
                 Last updated: {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </DialogDescription>
+              <Link to="/terms" className="inline-flex items-center gap-1 font-body text-[10px] uppercase tracking-widest text-gold hover:text-gold/80 transition-colors">
+                Open full page <ExternalLink size={10} />
+              </Link>
             </DialogHeader>
             <div className="space-y-4 font-body text-xs text-muted-foreground leading-relaxed">
               <p>Welcome to FinalGlow AI. By accessing or using our application, you agree to be bound by these Terms of Use.</p>
@@ -100,6 +103,9 @@ const Footer = () => {
               <DialogDescription className="font-body text-xs text-muted-foreground">
                 Last updated: {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </DialogDescription>
+              <Link to="/privacy" className="inline-flex items-center gap-1 font-body text-[10px] uppercase tracking-widest text-gold hover:text-gold/80 transition-colors">
+                Open full page <ExternalLink size={10} />
+              </Link>
             </DialogHeader>
             <div className="space-y-4 font-body text-xs text-muted-foreground leading-relaxed">
               <p>Your privacy is at the heart of FinalGlow AI. This policy explains how we handle your data.</p>
