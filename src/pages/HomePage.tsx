@@ -92,6 +92,11 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
+            <img
+              src="/pwa-512x512.png"
+              alt="FinalGlow AI gold FG monogram logo"
+              className="w-16 h-16 rounded-2xl mb-3 shadow-lg ring-1 ring-gold/30"
+            />
             <h1 className="font-display text-3xl font-semibold tracking-tight text-primary-foreground leading-[1.1] mb-3">
               <span className="text-primary">FinalGlow AI</span>
             </h1>
