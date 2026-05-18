@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,16 +6,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
-import OnboardingPage from "./pages/OnboardingPage";
-import HomePage from "./pages/HomePage";
-import StylingFlowPage from "./pages/StylingFlowPage";
-import StylistPage from "./pages/StylistPage";
-import ColorAnalysisPage from "./pages/ColorAnalysisPage";
-import ProfilePage from "./pages/ProfilePage";
-import CommunityPage from "./pages/CommunityPage";
-import AuthPage from "./pages/AuthPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import NotFound from "./pages/NotFound";
+
+// Lazy loading de toutes les pages
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const StylingFlowPage = lazy(() => import("./pages/StylingFlowPage"));
+const StylistPage = lazy(() => import("./pages/StylistPage"));
+const ColorAnalysisPage = lazy(() => import("./pages/ColorAnalysisPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const CommunityPage = lazy(() => import("./pages/CommunityPage"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -25,7 +27,7 @@ const AppContent = () => {
   const isAuthPage = location.pathname === "/" || location.pathname === "/reset-password";
 
   return (
-    <>
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Chargement...</div>}>
       {showOnboarding && isAuthPage && (
         <OnboardingPage onComplete={() => setShowOnboarding(false)} />
       )}
@@ -43,7 +45,7 @@ const AppContent = () => {
         </Routes>
         {!isAuthPage && <BottomNav />}
       </div>
-    </>
+    </Suspense>
   );
 };
 
@@ -61,4 +63,5 @@ const App = () => (
   </QueryClientProvider>
 );
 
+export default App;
 export default App;
