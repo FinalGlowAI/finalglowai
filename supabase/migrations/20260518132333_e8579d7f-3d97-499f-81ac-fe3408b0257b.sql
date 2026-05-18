@@ -1,0 +1,1 @@
+ALTER TABLE public.glow_posts ADD COLUMN IF NOT EXISTS bonus_glows integer NOT NULL DEFAULT 0;

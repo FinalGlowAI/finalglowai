@@ -45,6 +45,7 @@ export type Database = {
       }
       glow_posts: {
         Row: {
+          bonus_glows: number
           caption: string | null
           created_at: string
           id: string
@@ -54,6 +55,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bonus_glows?: number
           caption?: string | null
           created_at?: string
           id?: string
@@ -63,6 +65,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bonus_glows?: number
           caption?: string | null
           created_at?: string
           id?: string
