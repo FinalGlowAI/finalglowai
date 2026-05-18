@@ -1,5 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 
 
 const Footer = () => {
