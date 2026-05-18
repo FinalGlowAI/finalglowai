@@ -13,6 +13,7 @@ interface GlowPost {
   image_url: string;
   caption: string | null;
   created_at: string;
+  is_seed: boolean;
   user_email?: string;
   glow_count: number;
   has_glowed: boolean;
@@ -57,7 +58,8 @@ const CommunityPage = () => {
       const { data: postsData, error } = await supabase
         .from("glow_posts")
         .select("*")
-        .gte("created_at", cutoff)
+        .or(`created_at.gte.${cutoff},is_seed.eq.true`)
+        .order("is_seed", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -319,20 +321,31 @@ const CommunityPage = () => {
                   </div>
                   <div>
                     <p className="font-body text-xs font-medium text-foreground">
-                      {post.user_id === user?.id
+                      {post.is_seed
+                        ? "FinalGlow"
+                        : post.user_id === user?.id
                         ? "You"
                         : `Glower`}
                     </p>
                     <p className="font-body text-[10px] text-muted-foreground">
-                      {getTimeAgo(post.created_at)}
+                      {post.is_seed ? "Featured" : getTimeAgo(post.created_at)}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <Clock size={12} />
-                  <span className="font-body text-[10px]">
-                    {getTimeRemaining(post.created_at)}
-                  </span>
+                  {post.is_seed ? (
+                    <>
+                      <Sparkles size={12} className="text-gold" />
+                      <span className="font-body text-[10px] text-gold">Featured</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock size={12} />
+                      <span className="font-body text-[10px]">
+                        {getTimeRemaining(post.created_at)}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
