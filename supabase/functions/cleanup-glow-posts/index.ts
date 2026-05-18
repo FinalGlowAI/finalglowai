@@ -25,7 +25,8 @@ serve(async (req) => {
     const { data: expiredPosts, error: fetchError } = await supabase
       .from("glow_posts")
       .select("id, storage_path")
-      .lt("created_at", cutoff);
+      .lt("created_at", cutoff)
+      .eq("is_seed", false);
 
     if (fetchError) throw fetchError;
 
