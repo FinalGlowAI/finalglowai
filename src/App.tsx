@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Lazy loading de toutes les pages
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
@@ -36,12 +37,12 @@ const AppContent = () => {
       <div className="max-w-lg mx-auto relative">
         <Routes>
           <Route path="/" element={<AuthPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/outfit" element={<StylingFlowPage />} />
-          <Route path="/stylist" element={<StylistPage />} />
-          <Route path="/colors" element={<ColorAnalysisPage />} />
-          <Route path="/community" element={<CommunityPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/outfit" element={<ProtectedRoute><StylingFlowPage /></ProtectedRoute>} />
+          <Route path="/stylist" element={<ProtectedRoute><StylistPage /></ProtectedRoute>} />
+          <Route path="/colors" element={<ProtectedRoute><ColorAnalysisPage /></ProtectedRoute>} />
+          <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
