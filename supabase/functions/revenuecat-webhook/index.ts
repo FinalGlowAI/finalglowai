@@ -64,7 +64,6 @@ serve(async (req) => {
           active,
           expires_at: expiresAt,
           revenuecat_app_user_id: appUserId,
-          raw_event: event,
         },
         { onConflict: "user_id" }
       );

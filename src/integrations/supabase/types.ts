@@ -84,7 +84,6 @@ export type Database = {
           id: string
           platform: string
           product_id: string | null
-          raw_event: Json | null
           revenuecat_app_user_id: string | null
           updated_at: string
           user_id: string
@@ -96,7 +95,6 @@ export type Database = {
           id?: string
           platform?: string
           product_id?: string | null
-          raw_event?: Json | null
           revenuecat_app_user_id?: string | null
           updated_at?: string
           user_id: string
@@ -108,7 +106,6 @@ export type Database = {
           id?: string
           platform?: string
           product_id?: string | null
-          raw_event?: Json | null
           revenuecat_app_user_id?: string | null
           updated_at?: string
           user_id?: string
