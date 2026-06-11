@@ -197,7 +197,6 @@ const StylingFlowPage = () => {
   const [searchParams] = useSearchParams();
   const { user, subscribed, checkSubscription } = useAuth();
 
-  // Auto-refresh subscription after returning from Stripe checkout
   useEffect(() => {
     if (searchParams.get("subscribed") === "true") {
       checkSubscription().then(() => {
@@ -206,7 +205,7 @@ const StylingFlowPage = () => {
       // Clean up the URL
       navigate("/outfit", { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, checkSubscription, navigate]);
   const [currentStep, setCurrentStep] = useState<FlowStep>("outfit");
   const [direction, setDirection] = useState(1);
 
@@ -368,9 +367,10 @@ const StylingFlowPage = () => {
       if (data?.error) throw new Error(data.error);
 
       setEnhancedImage(data.enhancedImage);
-    } catch (err: any) {
-      console.error("Enhancement error:", err);
-      toast.error(err.message || "Failed to enhance image. Your original capture is shown.");
+    } catch (err) {
+      const error = err as Error;
+      console.error("Enhancement error:", error);
+      toast.error(error.message || "Failed to enhance image. Your original capture is shown.");
     } finally {
       setIsEnhancing(false);
     }

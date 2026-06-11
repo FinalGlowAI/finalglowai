@@ -49,7 +49,7 @@ serve(async (req) => {
       throw new Error("Payment system is not configured. Please contact support.");
     }
 
-    let body: any = {};
+    let body: { couponCode?: string } = {};
     try {
       const text = await req.text();
       if (text) body = JSON.parse(text);

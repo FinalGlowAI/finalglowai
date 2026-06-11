@@ -40,8 +40,9 @@ const AuthPage = () => {
         if (error) throw error;
         toast.success("Account created! You can now sign in.");
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const err = error as Error;
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -157,8 +158,9 @@ const AuthPage = () => {
               if (result.error) throw new Error(result.error.message || "Google sign-in failed");
               if (result.redirected) return;
               navigate("/home");
-            } catch (error: any) {
-              toast.error(error.message);
+            } catch (error) {
+              const err = error as Error;
+              toast.error(err.message);
               setLoading(false);
             }
           }}

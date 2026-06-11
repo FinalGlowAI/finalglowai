@@ -34,7 +34,12 @@ const showRecovery = (message: string) => {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
       }
-      try { localStorage.clear(); sessionStorage.clear(); } catch {}
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn("[BOOT] Reset failed:", e);
+      }
     } finally {
       const url = new URL(window.location.href);
       url.searchParams.set("_v", Date.now().toString());

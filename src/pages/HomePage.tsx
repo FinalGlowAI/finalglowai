@@ -48,7 +48,7 @@ const HomePage = () => {
       toast.success("Welcome to FinalGlow Pro! 🎉");
       navigate("/home", { replace: true });
     }
-  }, [searchParams, user]);
+  }, [searchParams, user, checkSubscription, navigate]);
   const handleProtectedNav = (path: string) => {
     if (!user) {
       toast.info("Please sign in first");

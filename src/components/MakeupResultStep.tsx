@@ -693,8 +693,9 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
                         toast.success("Your glow is live! ✨", { description: "Check it out in the Glow Community" });
                         setShowGlowCaption(false);
                         setGlowCaption("");
-                      } catch (error: any) {
-                        toast.error(error.message || "Failed to share your glow");
+                      } catch (error) {
+                        const err = error as Error;
+                        toast.error(err.message || "Failed to share your glow");
                       } finally {
                         setSharingToGlow(false);
                       }
@@ -814,9 +815,15 @@ const MakeupResultStep = ({ results, style, brand, onStartOver, capturedImage, e
                     const blob = await res.blob();
                     const file = new File([blob], "beauty-look.png", { type: blob.type });
                     if (navigator.canShare?.({ files: [file] })) shareData.files = [file];
-                  } catch {}
+                  } catch (e) {
+                    console.warn("Failed to retrieve local file for sharing:", e);
+                  }
                 }
-                try { await navigator.share(shareData); } catch {}
+                try {
+                  await navigator.share(shareData);
+                } catch (e) {
+                  console.warn("navigator.share failed:", e);
+                }
               } else {
                 await navigator.clipboard.writeText(shareText);
                 const { toast } = await import("sonner");

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Sparkles, Plus, X, Send, Clock, ImagePlus } from "lucide-react";
@@ -49,9 +49,10 @@ const CommunityPage = () => {
       return;
     }
     fetchPosts();
-  }, [user, subscribed]);
+  }, [user, subscribed, fetchPosts, navigate]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
+    if (!user) return;
     try {
       const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -76,25 +77,25 @@ const CommunityPage = () => {
             .from("glow_post_likes")
             .select("id")
             .eq("post_id", post.id)
-            .eq("user_id", user!.id)
+            .eq("user_id", user.id)
             .maybeSingle();
 
           return {
             ...post,
-            glow_count: (count || 0) + ((post as any).bonus_glows || 0),
+            glow_count: (count || 0) + (post.bonus_glows || 0),
             has_glowed: !!userGlow,
-            user_email: post.user_id === user!.id ? user!.email : undefined,
+            user_email: post.user_id === user.id ? user.email : undefined,
           };
         })
       );
 
       setPosts(postsWithGlows);
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Failed to load posts");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,8 +146,9 @@ const CommunityPage = () => {
       setPreviewUrl(null);
       setCaption("");
       fetchPosts();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const err = error as Error;
+      toast.error(err.message);
     } finally {
       setUploading(false);
     }

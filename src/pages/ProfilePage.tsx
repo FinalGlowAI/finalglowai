@@ -110,19 +110,20 @@ const ProfilePage = () => {
         navigate("/");
         return;
       }
-      const body: any = {};
+      const body: { couponCode?: string } = {};
       if (couponCode.trim()) body.couponCode = couponCode.trim();
       const { data, error } = await supabase.functions.invoke("create-checkout", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.url) window.open(data.url, "_blank");
       else throw new Error("Could not start checkout. Please try again.");
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as { code?: string; message?: string };
       // RevenueCat user-cancelled errors should not show as errors
-      if (err?.code === "1" || /cancel/i.test(err?.message ?? "")) {
+      if (error?.code === "1" || /cancel/i.test(error?.message ?? "")) {
         toast.info("Purchase cancelled");
       } else {
-        toast.error(err.message || "Failed to start checkout");
+        toast.error(error.message || "Failed to start checkout");
       }
     } finally {
       setCheckoutLoading(false);
@@ -139,8 +140,9 @@ const ProfilePage = () => {
       } else {
         toast.info("No active purchases found");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to restore purchases");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to restore purchases");
     } finally {
       setRestoreLoading(false);
     }
@@ -152,8 +154,9 @@ const ProfilePage = () => {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to open portal");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to open portal");
     } finally {
       setPortalLoading(false);
     }

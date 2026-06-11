@@ -46,8 +46,9 @@ const ResetPasswordPage = () => {
       if (error) throw error;
       toast.success("Password updated successfully!");
       navigate("/home");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const err = error as Error;
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
