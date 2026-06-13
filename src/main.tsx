@@ -2,7 +2,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-const PWA_CLEANUP_KEY = "finalglow-pwa-cleanup-v2";
+const isCapacitor = () =>
+  typeof window !== "undefined" &&
+  !!(window as any).Capacitor?.isNativePlatform?.();
 
 const renderApp = () => {
   try {
@@ -34,7 +36,12 @@ const showRecovery = (message: string) => {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
       }
-      try { localStorage.clear(); sessionStorage.clear(); } catch {}
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn("[BOOT] Reset failed:", e);
+      }
     } finally {
       const url = new URL(window.location.href);
       url.searchParams.set("_v", Date.now().toString());
@@ -43,7 +50,16 @@ const showRecovery = (message: string) => {
   });
 };
 
+const PWA_CLEANUP_KEY = "finalglow-pwa-cleanup-v2";
+
 const bootApp = async () => {
+  // Skip PWA cleanup entirely on Capacitor — service workers and
+  // cache busting via location.replace don't work in native WebViews.
+  if (isCapacitor()) {
+    renderApp();
+    return;
+  }
+
   let didCleanup = false;
   try {
     const alreadyCleaned = localStorage.getItem(PWA_CLEANUP_KEY) === "done";
@@ -61,8 +77,6 @@ const bootApp = async () => {
       }
       localStorage.setItem(PWA_CLEANUP_KEY, "done");
 
-      // If we removed an old SW/cache, force one cache-busting reload so
-      // the freshly-fetched bundle takes over instead of the cached one.
       if (didCleanup) {
         const url = new URL(window.location.href);
         if (!url.searchParams.has("_v")) {
