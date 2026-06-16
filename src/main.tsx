@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { Capacitor } from "@capacitor/core";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -49,6 +50,11 @@ const showRecovery = (message: string) => {
 };
 
 const bootApp = async () => {
+  if (Capacitor.isNativePlatform()) {
+    renderApp();
+    return;
+  }
+
   let didCleanup = false;
   try {
     const alreadyCleaned = localStorage.getItem(PWA_CLEANUP_KEY) === "done";
