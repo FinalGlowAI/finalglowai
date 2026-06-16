@@ -38,19 +38,6 @@ const CommunityPage = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    if (!subscribed) {
-      toast.error("Upgrade to Pro to access the Glow Community");
-      navigate("/profile");
-      return;
-    }
-    fetchPosts();
-  }, [user, subscribed, fetchPosts, navigate]);
-
   const fetchPosts = useCallback(async () => {
     if (!user) return;
     try {
@@ -96,6 +83,19 @@ const CommunityPage = () => {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (!subscribed) {
+      toast.error("Upgrade to Pro to access the Glow Community");
+      navigate("/profile");
+      return;
+    }
+    fetchPosts();
+  }, [user, subscribed, fetchPosts, navigate]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
