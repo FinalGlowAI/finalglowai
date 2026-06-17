@@ -74,19 +74,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const startupTimeout = window.setTimeout(() => {
+      if (mounted) {
+        console.warn("[AuthContext] Session startup timed out; showing signed-out state");
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      }
+    }, 5000);
 
-    return () => subscription.unsubscribe();
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!mounted) return;
+        window.clearTimeout(startupTimeout);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        window.clearTimeout(startupTimeout);
+        console.warn("[AuthContext] Session startup failed", error);
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+      window.clearTimeout(startupTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Check subscription when user changes
